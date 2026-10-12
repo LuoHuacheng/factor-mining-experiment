@@ -38,7 +38,7 @@ frontend/.playwright-cli/
 ai-*.png
 bash.exe.stackdump
 ssh-config.toml
-backend/qihuo-kline-history.tgz
+backend/*kline-history*.tgz
 
 # 运行时安装的 AI Skills（由测试和用户上传生成）
 backend/skills/

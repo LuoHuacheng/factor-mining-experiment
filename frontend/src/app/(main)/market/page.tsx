@@ -22,7 +22,6 @@ import { cn } from "@/lib/utils"
 
 /** 布局偏好持久化 key（分屏数 + 右栏收起状态 + 右栏 tab；全屏不持久化） */
 const LAYOUT_PREF_KEY = "app-market-layout"
-const LEGACY_LAYOUT_PREF_KEY = "qihuo-market-layout"
 
 function isSplitMode(v: unknown): v is KlineSplitMode {
   return v === 1 || v === 2 || v === 3 || v === 4
@@ -41,9 +40,7 @@ function loadLayoutPref(): {
   if (typeof window === "undefined")
     return { split: 1, rightCollapsed: false, rightTab: "market" }
   try {
-    const raw =
-      localStorage.getItem(LAYOUT_PREF_KEY) ||
-      localStorage.getItem(LEGACY_LAYOUT_PREF_KEY)
+    const raw = localStorage.getItem(LAYOUT_PREF_KEY)
     if (!raw) return { split: 1, rightCollapsed: false, rightTab: "market" }
     const pref = JSON.parse(raw) as Record<string, unknown>
     return {

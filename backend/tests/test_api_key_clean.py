@@ -13,13 +13,12 @@ from app.models.api_key import ApiKey
 def test_new_key_prefix():
     key = generate_raw_key()
     assert key.startswith("ak_")
-    assert not key.startswith("qihuo_")
     assert _prefix_of(key).startswith("ak_")
 
 
 @pytest.mark.asyncio
 async def test_authenticate_supports_legacy_and_new_keys():
-    legacy_key = "qihuo_mock_test_token_12345678"
+    legacy_key = "legacy_mock_test_token_12345678"
     legacy_hash = hash_key(legacy_key)
 
     mock_record = MagicMock(spec=ApiKey)

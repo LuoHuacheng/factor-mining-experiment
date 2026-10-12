@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 }
 
 /** 首屏前恢复字号，避免闪一下再变大 */
-const FONT_SIZE_BOOT_SCRIPT = `(function(){try{var k='app_font_size';var lk='qihuo_font_size';var s=localStorage.getItem(k)||localStorage.getItem(lk)||'standard';var ok={standard:1,large:1,xlarge:1,xxlarge:1};if(!ok[s])s='standard';document.documentElement.setAttribute('data-font-size',s);}catch(e){document.documentElement.setAttribute('data-font-size','standard');}})();`
+const FONT_SIZE_BOOT_SCRIPT = `(function(){try{var k='app_font_size';var s=localStorage.getItem(k)||'standard';var ok={standard:1,large:1,xlarge:1,xxlarge:1};if(!ok[s])s='standard';document.documentElement.setAttribute('data-font-size',s);}catch(e){document.documentElement.setAttribute('data-font-size','standard');}})();`
 
 export default function RootLayout({
   children,

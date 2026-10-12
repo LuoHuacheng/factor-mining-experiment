@@ -24,7 +24,6 @@ import {
  */
 
 const STORAGE_KEY = "app-big-order-settings"
-const LEGACY_STORAGE_KEY = "qihuo-big-order-settings"
 const SAVE_DEBOUNCE_MS = 800
 
 export type BigOrderSettings = {
@@ -64,9 +63,7 @@ function normalize(raw: Partial<BigOrderSettings> | null): BigOrderSettings {
 function loadLocal(): BigOrderSettings {
   if (typeof window === "undefined") return { ...DEFAULT_BIG_ORDER_SETTINGS }
   try {
-    const raw =
-      localStorage.getItem(STORAGE_KEY) ||
-      localStorage.getItem(LEGACY_STORAGE_KEY)
+    const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return { ...DEFAULT_BIG_ORDER_SETTINGS }
     return normalize(JSON.parse(raw) as Partial<BigOrderSettings>)
   } catch {

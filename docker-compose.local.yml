@@ -15,12 +15,12 @@ services:
     image: postgres:18
     container_name: postgres
     environment:
-      POSTGRES_USER: "${POSTGRES_USER:-qihuo}"
+      POSTGRES_USER: "${POSTGRES_USER:-postgres}"
       POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?需要 .env 中的 POSTGRES_PASSWORD}"
-      POSTGRES_DB: "${POSTGRES_DB:-qihuo}"
+      POSTGRES_DB: "${POSTGRES_DB:-factor_lab}"
     # 只绑回环，供宿主 psql/pg_dump 使用；容器间走 app-net 服务名。
     ports:
-      - "127.0.0.1:${QIHUO_PG_HOST_PORT:-5433}:5432"
+      - "127.0.0.1:${PG_HOST_PORT:-5433}:5432"
     volumes:
       # postgres:18 起数据目录带主版本子目录，必须挂父目录
       # （挂 /var/lib/postgresql/data 会被镜像判为「未使用的挂载」并拒绝启动）
@@ -32,8 +32,8 @@ services:
       test:
         - CMD-SHELL
         - >-
-          pg_isready -U ${POSTGRES_USER:-qihuo}
-          -d ${POSTGRES_DB:-qihuo}
+          pg_isready -U ${POSTGRES_USER:-postgres}
+          -d ${POSTGRES_DB:-factor_lab}
       interval: 10s
       timeout: 5s
       retries: 6
@@ -46,4 +46,3 @@ services:
 
 volumes:
   postgres-data:
-    name: qihuo-postgres-data

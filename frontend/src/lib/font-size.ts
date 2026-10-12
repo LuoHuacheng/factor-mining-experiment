@@ -3,7 +3,6 @@
 export type FontSizeLevel = "standard" | "large" | "xlarge" | "xxlarge"
 
 export const FONT_SIZE_STORAGE_KEY = "app_font_size"
-export const LEGACY_FONT_SIZE_STORAGE_KEY = "qihuo_font_size"
 
 export interface FontSizeOption {
   value: FontSizeLevel
@@ -66,9 +65,7 @@ export function readStoredFontSize(): FontSizeLevel {
     return "standard"
   }
   try {
-    const raw =
-      window.localStorage.getItem(FONT_SIZE_STORAGE_KEY) ||
-      window.localStorage.getItem(LEGACY_FONT_SIZE_STORAGE_KEY)
+    const raw = window.localStorage.getItem(FONT_SIZE_STORAGE_KEY)
     return normalizeFontSize(raw)
   } catch {
     return "standard"

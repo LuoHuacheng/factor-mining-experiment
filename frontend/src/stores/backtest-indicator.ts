@@ -18,7 +18,6 @@ import {
 } from "@/stores/indicator-config"
 
 const STORAGE_KEY = "app-backtest-indicators"
-const LEGACY_STORAGE_KEY = "qihuo-backtest-indicators"
 
 export type BacktestIndicatorState = LocalIndicatorState
 

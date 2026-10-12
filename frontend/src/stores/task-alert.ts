@@ -17,7 +17,6 @@ import {
 } from "@/lib/ai-trading-api"
 
 const STORAGE_KEY = "app-task-alert-settings"
-const LEGACY_STORAGE_KEY = "qihuo-task-alert-settings"
 const SAVE_DEBOUNCE_MS = 800
 
 export const DEFAULT_TASK_ALERT_SETTINGS: TaskAlertSettings = {
@@ -36,9 +35,7 @@ function normalize(raw: Partial<TaskAlertSettings> | null): TaskAlertSettings {
 function loadLocal(): TaskAlertSettings {
   if (typeof window === "undefined") return { ...DEFAULT_TASK_ALERT_SETTINGS }
   try {
-    const raw =
-      localStorage.getItem(STORAGE_KEY) ||
-      localStorage.getItem(LEGACY_STORAGE_KEY)
+    const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return { ...DEFAULT_TASK_ALERT_SETTINGS }
     return normalize(JSON.parse(raw) as Partial<TaskAlertSettings>)
   } catch {

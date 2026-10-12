@@ -8,14 +8,12 @@ import type { User } from "@/types"
 const ACCESS_KEY = "access_token"
 const REFRESH_KEY = "refresh_token"
 const USER_KEY = "app_auth_user"
-const LEGACY_USER_KEY = "qihuo_auth_user"
 
-/** 从 localStorage 恢复用户（刷新后保持角色，优先新 key，兼容旧 key） */
+/** 从 localStorage 恢复用户（刷新后保持角色） */
 export function getStoredUser(): User | null {
   if (typeof window === "undefined") return null
   try {
-    const raw =
-      localStorage.getItem(USER_KEY) || localStorage.getItem(LEGACY_USER_KEY)
+    const raw = localStorage.getItem(USER_KEY)
     if (!raw) return null
     const parsed = JSON.parse(raw) as User
     if (!parsed?.id || !parsed?.username) return null
@@ -38,7 +36,6 @@ function writeCachedUser(user: User | null): void {
       localStorage.setItem(USER_KEY, JSON.stringify(user))
     } else {
       localStorage.removeItem(USER_KEY)
-      localStorage.removeItem(LEGACY_USER_KEY)
     }
   } catch {
     // 隐私模式等写失败忽略

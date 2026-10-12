@@ -15,10 +15,6 @@ const REMEMBER_KEY = "app_login_remember"
 const SAVED_USER_KEY = "app_login_username"
 const SAVED_PASS_KEY = "app_login_password"
 
-const LEGACY_REMEMBER_KEY = "qihuo_login_remember"
-const LEGACY_SAVED_USER_KEY = "qihuo_login_username"
-const LEGACY_SAVED_PASS_KEY = "qihuo_login_password"
-
 interface RememberedInfo {
   username: string
   password: string
@@ -31,19 +27,11 @@ function loadRemembered(): RememberedInfo {
     return { username: "", password: "", remember: false }
   }
   try {
-    const remember =
-      (localStorage.getItem(REMEMBER_KEY) ??
-        localStorage.getItem(LEGACY_REMEMBER_KEY)) === "1"
+    const remember = localStorage.getItem(REMEMBER_KEY) === "1"
     if (!remember) return { username: "", password: "", remember: false }
     return {
-      username:
-        localStorage.getItem(SAVED_USER_KEY) ??
-        localStorage.getItem(LEGACY_SAVED_USER_KEY) ??
-        "",
-      password:
-        localStorage.getItem(SAVED_PASS_KEY) ??
-        localStorage.getItem(LEGACY_SAVED_PASS_KEY) ??
-        "",
+      username: localStorage.getItem(SAVED_USER_KEY) ?? "",
+      password: localStorage.getItem(SAVED_PASS_KEY) ?? "",
       remember: true,
     }
   } catch {
@@ -66,9 +54,6 @@ function persistRemember(
       localStorage.removeItem(REMEMBER_KEY)
       localStorage.removeItem(SAVED_USER_KEY)
       localStorage.removeItem(SAVED_PASS_KEY)
-      localStorage.removeItem(LEGACY_REMEMBER_KEY)
-      localStorage.removeItem(LEGACY_SAVED_USER_KEY)
-      localStorage.removeItem(LEGACY_SAVED_PASS_KEY)
     }
   } catch {
     // 隐私模式等写失败忽略

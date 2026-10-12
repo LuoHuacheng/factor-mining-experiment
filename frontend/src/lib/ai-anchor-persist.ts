@@ -19,11 +19,6 @@ export const VOICE_KEY = "app-ai-anchor-voice"
 export const VOICE_URI_KEY = "app-ai-anchor-voice-uri"
 export const VOICE_RATE_KEY = "app-ai-anchor-voice-rate"
 
-export const LEGACY_DRAFT_KEY = "qihuo-ai-anchor-draft"
-export const LEGACY_VOICE_KEY = "qihuo-ai-anchor-voice"
-export const LEGACY_VOICE_URI_KEY = "qihuo-ai-anchor-voice-uri"
-export const LEGACY_VOICE_RATE_KEY = "qihuo-ai-anchor-voice-rate"
-
 /** 配置草稿 */
 export interface AnchorDraft {
   modelRowId: string
@@ -99,7 +94,7 @@ export const FALLBACK_INDICATOR_SCHEMA: Record<string, AnchorParamSpec[]> = {
 export function loadDraft(): AnchorDraft {
   if (typeof window === "undefined") return DEFAULT_DRAFT
   try {
-    const raw = localStorage.getItem(DRAFT_KEY) || localStorage.getItem(LEGACY_DRAFT_KEY)
+    const raw = localStorage.getItem(DRAFT_KEY)
     if (!raw) return DEFAULT_DRAFT
     const parsed = JSON.parse(raw) as Partial<AnchorDraft> & { timeframe?: string }
     const directionMode: AnchorDirectionMode =
@@ -142,7 +137,7 @@ export function saveDraft(draft: AnchorDraft): void {
 /** 语音开关持久化（默认开） */
 export function loadVoiceEnabled(): boolean {
   if (typeof window === "undefined") return true
-  const val = localStorage.getItem(VOICE_KEY) ?? localStorage.getItem(LEGACY_VOICE_KEY)
+  const val = localStorage.getItem(VOICE_KEY)
   return val !== "0"
 }
 
@@ -157,7 +152,7 @@ export function saveVoiceEnabled(enabled: boolean): void {
 /** 音色 voiceURI 持久化（null=自动选中文语音） */
 export function loadVoiceURI(): string | null {
   if (typeof window === "undefined") return null
-  return localStorage.getItem(VOICE_URI_KEY) || localStorage.getItem(LEGACY_VOICE_URI_KEY)
+  return localStorage.getItem(VOICE_URI_KEY)
 }
 
 export function saveVoiceURI(voiceURI: string | null): void {
@@ -175,9 +170,7 @@ export function saveVoiceURI(voiceURI: string | null): void {
 /** 语速持久化（0.5-1.5，默认 1） */
 export function loadVoiceRate(): number {
   if (typeof window === "undefined") return 1
-  const raw = Number(
-    localStorage.getItem(VOICE_RATE_KEY) || localStorage.getItem(LEGACY_VOICE_RATE_KEY),
-  )
+  const raw = Number(localStorage.getItem(VOICE_RATE_KEY))
   if (!Number.isFinite(raw) || raw < 0.5 || raw > 1.5) return 1
   return raw
 }

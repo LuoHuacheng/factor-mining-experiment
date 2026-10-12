@@ -1,7 +1,7 @@
 # 交易与量化回测系统
 #
 # 所有应用镜像必须由受验证的 release.env 显式提供，格式为 repository@sha256:digest。
-# 运行时秘密由 RUNTIME_ENV_FILE / QIHUO_RUNTIME_ENV_FILE 指向的服务器本地文件提供。
+# 运行时秘密由 RUNTIME_ENV_FILE 指向的服务器本地文件提供。
 
 services:
   redis:
@@ -12,10 +12,10 @@ services:
     # redis 数据为行情缓存(可重建)，纯内存彻底隔离磁盘 I/O。
     command: ["redis-server", "--save", "", "--appendonly", "no"]
     ports:
-      - "127.0.0.1:${REDIS_HOST_PORT:-${QIHUO_REDIS_HOST_PORT:-6380}}:6379"
+      - "127.0.0.1:${REDIS_HOST_PORT:-6380}:6379"
       # LAN 绑定（可选）：供其他机器推流双写；
       # 默认绑回环另一端口（无副作用），需要时设 REDIS_LAN_BIND=<本机 LAN IP>
-      - "${REDIS_LAN_BIND:-${QIHUO_REDIS_LAN_BIND:-127.0.0.1}}:${REDIS_LAN_PORT:-${QIHUO_REDIS_LAN_PORT:-6381}}:6379"
+      - "${REDIS_LAN_BIND:-127.0.0.1}:${REDIS_LAN_PORT:-6381}:6379"
     volumes:
       - redis-data:/data
     restart: unless-stopped
@@ -29,24 +29,24 @@ services:
       start_period: 10s
 
   backend:
-    image: "${BACKEND_IMAGE:-${QIHUO_BACKEND_IMAGE:?必须设置 BACKEND_IMAGE 或 QIHUO_BACKEND_IMAGE}}"
+    image: "${BACKEND_IMAGE:?必须设置 BACKEND_IMAGE}"
     container_name: backend
     ports:
       - "${BACKEND_HOST_PORT:-8002}:8001"
     env_file:
-      - "${RUNTIME_ENV_FILE:-${QIHUO_RUNTIME_ENV_FILE:-.env}}"
+      - "${RUNTIME_ENV_FILE:-.env}"
     environment:
       APP_ENV: production
-      POSTGRES_HOST: "${POSTGRES_HOST:-${QIHUO_POSTGRES_HOST:-postgres}}"
-      POSTGRES_PORT: "${POSTGRES_PORT:-${QIHUO_POSTGRES_PORT:-5432}}"
-      POSTGRES_USER: "${POSTGRES_USER:-${QIHUO_POSTGRES_USER:-qihuo}}"
-      POSTGRES_DB: "${POSTGRES_DB:-${QIHUO_POSTGRES_DB:-qihuo}}"
+      POSTGRES_HOST: "${POSTGRES_HOST:-postgres}"
+      POSTGRES_PORT: "${POSTGRES_PORT:-5432}"
+      POSTGRES_USER: "${POSTGRES_USER:-postgres}"
+      POSTGRES_DB: "${POSTGRES_DB:-factor_lab}"
       REDIS_HOST: redis
       REDIS_PORT: "6379"
-      QDRANT_HOST: "${QDRANT_HOST:-${QIHUO_QDRANT_HOST:-qdrant}}"
-      QDRANT_PORT: "${QDRANT_PORT:-${QIHUO_QDRANT_PORT:-6333}}"
-      JWT_ACCESS_TOKEN_EXPIRE_MINUTES: "${JWT_ACCESS_TOKEN_EXPIRE_MINUTES:-${QIHUO_JWT_ACCESS_MINUTES:-10080}}"
-      JWT_REFRESH_TOKEN_EXPIRE_DAYS: "${JWT_REFRESH_TOKEN_EXPIRE_DAYS:-${QIHUO_JWT_REFRESH_DAYS:-7}}"
+      QDRANT_HOST: "${QDRANT_HOST:-qdrant}"
+      QDRANT_PORT: "${QDRANT_PORT:-6333}"
+      JWT_ACCESS_TOKEN_EXPIRE_MINUTES: "${JWT_ACCESS_TOKEN_EXPIRE_MINUTES:-10080}"
+      JWT_REFRESH_TOKEN_EXPIRE_DAYS: "${JWT_REFRESH_TOKEN_EXPIRE_DAYS:-7}"
     # 中断重启：redis 纯内存+retry 后理论上不崩，此为偶发兜底
     restart: always
     depends_on:
@@ -58,7 +58,7 @@ services:
       - app-net
 
   frontend:
-    image: "${FRONTEND_IMAGE:-${QIHUO_FRONTEND_IMAGE:?必须设置 FRONTEND_IMAGE 或 QIHUO_FRONTEND_IMAGE}}"
+    image: "${FRONTEND_IMAGE:?必须设置 FRONTEND_IMAGE}"
     container_name: frontend
     ports:
       - "${FRONTEND_HOST_PORT:-3000}:3000"
@@ -78,4 +78,3 @@ networks:
 
 volumes:
   redis-data:
-    name: qihuo-redis-data

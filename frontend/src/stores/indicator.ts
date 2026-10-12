@@ -16,7 +16,6 @@ import {
 } from "@/stores/indicator-config"
 
 const STORAGE_KEY = "app-indicators"
-const LEGACY_STORAGE_KEY = "qihuo-indicators"
 /** 后端保存防抖（合并高频调参） */
 const SAVE_DEBOUNCE_MS = 800
 
@@ -55,7 +54,7 @@ export const useIndicatorStore = create<IndicatorState>((set, get) => {
     // 归一化与全套 update*/toggle* action 来自共享工厂（stores/indicator-config.ts）
     ...createIndicatorActions(set, persist),
 
-    config: loadIndicatorConfig(STORAGE_KEY, LEGACY_STORAGE_KEY),
+    config: loadIndicatorConfig(STORAGE_KEY),
     loaded: false,
 
     // loadFromServer 是存量用户唯一的配置继承路径，逻辑保持原样
@@ -66,10 +65,7 @@ export const useIndicatorStore = create<IndicatorState>((set, get) => {
       try {
         const serverRaw = await getIndicatorSettingsApi()
         const serverConfig = normalizeIndicatorConfig(serverRaw)
-        // 老用户迁移：后端无记录(=默认) 且 localStorage 有非默认值 → 上传本地
-        const localRaw =
-          localStorage.getItem(STORAGE_KEY) ||
-          localStorage.getItem(LEGACY_STORAGE_KEY)
+        const localRaw = localStorage.getItem(STORAGE_KEY)
         const localConfig = localRaw
           ? normalizeIndicatorConfig(JSON.parse(localRaw) as Partial<IndicatorConfig>)
           : null

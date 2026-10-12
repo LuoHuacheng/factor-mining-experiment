@@ -48,21 +48,13 @@ export interface LocalIndicatorState extends IndicatorActions {
   config: IndicatorConfig
 }
 
-/** 从 localStorage 加载配置（按各 store 自己的 key，支持旧 key 兼容） */
+/** 从 localStorage 加载配置（按各 store 自己的 key） */
 export function loadIndicatorConfig(
   storageKey: string,
-  legacyKey?: string,
 ): IndicatorConfig {
   if (typeof window === "undefined") return DEFAULT_INDICATOR_CONFIG
   try {
-    const fallbackKey =
-      legacyKey ??
-      (storageKey.startsWith("app-")
-        ? storageKey.replace(/^app-/, "qihuo-")
-        : undefined)
-    const raw =
-      localStorage.getItem(storageKey) ||
-      (fallbackKey ? localStorage.getItem(fallbackKey) : null)
+    const raw = localStorage.getItem(storageKey)
     if (!raw) return DEFAULT_INDICATOR_CONFIG
     return normalizeIndicatorConfig(JSON.parse(raw) as Partial<IndicatorConfig>)
   } catch {

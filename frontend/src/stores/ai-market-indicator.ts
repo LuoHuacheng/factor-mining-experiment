@@ -18,7 +18,6 @@ import {
 } from "@/stores/indicator-config"
 
 const STORAGE_KEY = "app-ai-market-indicators"
-const LEGACY_STORAGE_KEY = "qihuo-ai-market-indicators"
 
 export type AiMarketIndicatorState = LocalIndicatorState
 

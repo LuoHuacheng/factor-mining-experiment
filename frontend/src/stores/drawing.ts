@@ -15,7 +15,6 @@ import {
   DEFAULT_DRAW_COLOR,
   DEFAULT_DRAW_WIDTH,
   DRAWING_STORAGE_KEY,
-  LEGACY_DRAWING_STORAGE_KEY,
   makeShapeId,
   type DrawGroup,
   type DrawShape,
@@ -45,9 +44,7 @@ interface PersistPayload {
 function loadMap(): DrawingMap {
   if (typeof window === "undefined") return {}
   try {
-    const raw =
-      localStorage.getItem(DRAWING_STORAGE_KEY) ||
-      localStorage.getItem(LEGACY_DRAWING_STORAGE_KEY)
+    const raw = localStorage.getItem(DRAWING_STORAGE_KEY)
     if (!raw) return {}
     const parsed = JSON.parse(raw) as PersistPayload | DrawingMap
     // 兼容老版本（无 v 字段）

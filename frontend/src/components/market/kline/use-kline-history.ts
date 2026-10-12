@@ -125,7 +125,6 @@ function bundleOnce(symbol: string, wanted: KlinePeriod): Promise<boolean> {
 // ===== localStorage 持久化：刷新页面后切分时同样秒切 =====
 
 const STORAGE_KEY = "app.kline-history.v1"
-const LEGACY_STORAGE_KEY = "qihuo.kline-history.v1"
 /** 最多持久化合约数（按最近更新时间 LRU 淘汰） */
 const STORAGE_MAX_SYMBOLS = 6
 /** 每周期持久化根数（首页 200 + 余量） */
@@ -145,9 +144,7 @@ function loadPersistedCache(): void {
   if (_storageLoaded || typeof window === "undefined") return
   _storageLoaded = true
   try {
-    const raw =
-      window.localStorage.getItem(STORAGE_KEY) ||
-      window.localStorage.getItem(LEGACY_STORAGE_KEY)
+    const raw = window.localStorage.getItem(STORAGE_KEY)
     if (!raw) return
     const parsed = JSON.parse(raw) as StoredCache
     for (const [sym, entry] of Object.entries(parsed)) {
