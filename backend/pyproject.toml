@@ -1,5 +1,5 @@
 [project]
-name = "qihuo-backend"
+name = "backend"
 version = "0.8.0"
 description = "期货交易系统 - 后端服务"
 requires-python = ">=3.12"
