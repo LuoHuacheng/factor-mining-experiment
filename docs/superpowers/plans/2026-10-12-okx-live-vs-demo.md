@@ -639,7 +639,7 @@ git commit -m "test(paper): 验证纸面撮合引擎实盘与模拟盘行情隔�
   - `generate_okx_signature(timestamp: str, method: str, request_path: str, body: str, secret_key: str) -> str`
   - `build_okx_auth_headers(api_key: str, secret_key: str, passphrase: str, method: str, request_path: str, body: str = "", demo: bool = False, timestamp: str | None = None) -> dict[str, str]`
 
-- [ ] **Step 1: 编写失败测试**
+- [x] **Step 1: 编写失败测试**
 
 新建 `backend/tests/test_okx_auth.py`：
 
@@ -692,7 +692,7 @@ def test_build_okx_auth_headers_live_no_demo_header():
     assert "x-simulated-trading" not in headers
 ```
 
-- [ ] **Step 2: 运行测试确认失败**
+- [x] **Step 2: 运行测试确认失败**
 
 ```bash
 cd /Users/hc/Documents/ai/factor-mining-experiment/backend
@@ -701,7 +701,7 @@ uv run pytest tests/test_okx_auth.py -v
 
 Expected: FAIL（`ModuleNotFoundError: No module named 'app.connectors.okx.auth'`）
 
-- [ ] **Step 3: 实现签名算法**
+- [x] **Step 3: 实现签名算法**
 
 新建 `backend/app/connectors/okx/auth.py`：
 
@@ -767,7 +767,7 @@ def build_okx_auth_headers(
     return headers
 ```
 
-- [ ] **Step 4: 运行测试确认通过**
+- [x] **Step 4: 运行测试确认通过**
 
 ```bash
 cd /Users/hc/Documents/ai/factor-mining-experiment/backend
@@ -776,7 +776,7 @@ uv run pytest tests/test_okx_auth.py -v
 
 Expected: PASS，全部用例通过
 
-- [ ] **Step 5: 提交改动**
+- [x] **Step 5: 提交改动**
 
 ```bash
 cd /Users/hc/Documents/ai/factor-mining-experiment
