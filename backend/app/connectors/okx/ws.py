@@ -20,6 +20,7 @@ from app.connectors.okx.market import ticker_to_quote
 logger = logging.getLogger("qihuo.okx.ws")
 
 OKX_PUBLIC_WS = "wss://ws.okx.com:8443/ws/v5/public"
+OKX_DEMO_PUBLIC_WS = "wss://wspap.okx.com:8443/ws/v5/public"
 
 # 重连退避（秒）
 _RECONNECT_MIN = 1.0
@@ -60,8 +61,11 @@ def parse_ws_message(msg: dict[str, Any]) -> tuple[str, dict[str, Any]] | None:
 class OkxPublicWs:
     """公开行情 WS 长连接，带指数退避重连"""
 
-    def __init__(self, url: str = OKX_PUBLIC_WS) -> None:
-        self._url = url
+    def __init__(self, url: str | None = None, demo: bool = False) -> None:
+        if url is not None:
+            self._url = url
+        else:
+            self._url = OKX_DEMO_PUBLIC_WS if demo else OKX_PUBLIC_WS
         self._stop = asyncio.Event()
         self._channels: list[str] = ["tickers"]
 

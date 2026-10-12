@@ -54,3 +54,17 @@ def test_parse_ignores_frame_without_data():
 
 def test_parse_ignores_frame_without_arg():
     assert ok.parse_ws_message({"data": [{"instId": "X"}]}) is None
+
+
+def test_ws_demo_url_selection():
+    from app.connectors.okx import ws as ok
+
+    ws_live = ok.OkxPublicWs(demo=False)
+    assert ws_live._url == "wss://ws.okx.com:8443/ws/v5/public"
+
+    ws_demo = ok.OkxPublicWs(demo=True)
+    assert ws_demo._url == "wss://wspap.okx.com:8443/ws/v5/public"
+
+    ws_custom = ok.OkxPublicWs(url="wss://custom.url", demo=True)
+    assert ws_custom._url == "wss://custom.url"
+
