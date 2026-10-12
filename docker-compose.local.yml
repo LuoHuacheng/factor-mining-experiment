@@ -40,6 +40,8 @@ services:
       start_period: 10s
 
   backend:
+    environment:
+      POSTGRES_HOST: postgres
     depends_on:
       postgres:
         condition: service_healthy
