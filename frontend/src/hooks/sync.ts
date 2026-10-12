@@ -9,7 +9,7 @@ export function useTabSync(): void {
   const { setActiveContract } = useAppStore()
 
   useEffect(() => {
-    const channel = new BroadcastChannel("qihuo-sync")
+    const channel = new BroadcastChannel("app-sync")
     channelRef.current = channel
 
     channel.onmessage = (event: MessageEvent) => {
@@ -35,7 +35,7 @@ export function useTabSync(): void {
 
 /** 广播合约变更到其他标签页 */
 export function broadcastContractChange(code: string): void {
-  const channel = new BroadcastChannel("qihuo-sync")
+  const channel = new BroadcastChannel("app-sync")
   channel.postMessage({ type: "active-contract", payload: code })
   channel.close()
 }

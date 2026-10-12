@@ -4,7 +4,8 @@ import { create } from "zustand"
 import type { CodeTreeMap } from "@/types"
 
 /** 当前选中合约的本地持久化 key（全局，多页面共用） */
-export const ACTIVE_CONTRACT_KEY = "qihuo_active_contract"
+export const ACTIVE_CONTRACT_KEY = "app_active_symbol"
+export const LEGACY_ACTIVE_CONTRACT_KEY = "qihuo_active_contract"
 
 /** 历史版本的出厂默认合约（非用户选择）：主力前移时随主力迁移 */
 export const STALE_DEFAULT_CONTRACT = "rb2610"
@@ -13,7 +14,9 @@ export const STALE_DEFAULT_CONTRACT = "rb2610"
 export function readActiveContract(): string | null {
   if (typeof window === "undefined") return null
   try {
-    const v = localStorage.getItem(ACTIVE_CONTRACT_KEY)
+    const v =
+      localStorage.getItem(ACTIVE_CONTRACT_KEY) ||
+      localStorage.getItem(LEGACY_ACTIVE_CONTRACT_KEY)
     return v ? v : null
   } catch {
     return null
@@ -45,13 +48,16 @@ export function migrateStaleContract(code: string, tree: CodeTreeMap | null): st
  * AI 看盘页选任务也会切全局合约，行情页恢复/保存只认自己的 key，
  * 两边互不串台（AI 看盘的任务选择存于 ai-market-selected-task）。
  */
-export const MARKET_VIEW_CONTRACT_KEY = "qihuo_market_view_contract"
+export const MARKET_VIEW_CONTRACT_KEY = "app_market_view_symbol"
+export const LEGACY_MARKET_VIEW_CONTRACT_KEY = "qihuo_market_view_contract"
 
 /** 读行情页自己的合约记忆（无记忆返回 null） */
 export function readMarketViewContract(): string | null {
   if (typeof window === "undefined") return null
   try {
-    const v = localStorage.getItem(MARKET_VIEW_CONTRACT_KEY)
+    const v =
+      localStorage.getItem(MARKET_VIEW_CONTRACT_KEY) ||
+      localStorage.getItem(LEGACY_MARKET_VIEW_CONTRACT_KEY)
     return v ? v : null
   } catch {
     return null

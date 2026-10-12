@@ -34,15 +34,15 @@ function createPaneIndicatorStore(
 
 /** 分屏 2 指标 store —— 与主屏/其他分屏完全隔离 */
 export const useMarketPane2IndicatorStore = createPaneIndicatorStore(
-  "qihuo-market-pane2-indicators",
+  "app-market-pane2-indicators",
 )
 
 /** 分屏 3 指标 store —— 与主屏/其他分屏完全隔离 */
 export const useMarketPane3IndicatorStore = createPaneIndicatorStore(
-  "qihuo-market-pane3-indicators",
+  "app-market-pane3-indicators",
 )
 
 /** 分屏 4 指标 store —— 与主屏/其他分屏完全隔离 */
 export const useMarketPane4IndicatorStore = createPaneIndicatorStore(
-  "qihuo-market-pane4-indicators",
+  "app-market-pane4-indicators",
 )

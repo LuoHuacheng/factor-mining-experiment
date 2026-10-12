@@ -30,7 +30,7 @@ import {
   type Pixel,
 } from "./render"
 
-const CANVAS_CLASS = "qihuo-drawing-overlay"
+const CANVAS_CLASS = "app-drawing-overlay"
 const CANVAS_Z_INDEX = 30
 
 /** hook 入参（与 useTradeLines 同范式） */

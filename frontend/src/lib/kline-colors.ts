@@ -7,7 +7,8 @@ export const DEFAULT_CANDLE_UP = "#ef4444"
 export const DEFAULT_CANDLE_DOWN = "#22c55e"
 
 /** localStorage 键 */
-const STORAGE_KEY = "qihuo-kline-colors"
+const STORAGE_KEY = "app-kline-colors"
+const LEGACY_STORAGE_KEY = "qihuo-kline-colors"
 
 /** 常用配色预设（涨色/跌色） */
 export const KLINE_COLOR_PRESETS: Array<{
@@ -40,7 +41,9 @@ export function readStoredKlineColors(): KlineColors {
     return { up: DEFAULT_CANDLE_UP, down: DEFAULT_CANDLE_DOWN }
   }
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY)
+    const raw =
+      window.localStorage.getItem(STORAGE_KEY) ||
+      window.localStorage.getItem(LEGACY_STORAGE_KEY)
     if (!raw) return { up: DEFAULT_CANDLE_UP, down: DEFAULT_CANDLE_DOWN }
     const parsed = JSON.parse(raw) as Record<string, unknown>
     const up = normalizeHexColor(parsed.up)

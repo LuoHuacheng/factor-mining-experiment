@@ -31,7 +31,8 @@ import {
 } from "@/lib/screener-api"
 import { getIndicatorSettingsApi } from "@/lib/api"
 
-const CONFIG_KEY = "qihuo-market-screener-config"
+const CONFIG_KEY = "app-market-screener-config"
+const LEGACY_CONFIG_KEY = "qihuo-market-screener-config"
 
 interface PersistedConfig {
   period: ScreenerPeriod
@@ -41,7 +42,9 @@ interface PersistedConfig {
 function loadPersistedConfig(): PersistedConfig | null {
   if (typeof window === "undefined") return null
   try {
-    const raw = localStorage.getItem(CONFIG_KEY)
+    const raw =
+      localStorage.getItem(CONFIG_KEY) ||
+      localStorage.getItem(LEGACY_CONFIG_KEY)
     if (!raw) return null
     const parsed = JSON.parse(raw) as PersistedConfig
     const validPeriod = SCREENER_PERIODS.some((p) => p.value === parsed.period)

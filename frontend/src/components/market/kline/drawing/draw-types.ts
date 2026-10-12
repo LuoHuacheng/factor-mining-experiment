@@ -61,7 +61,8 @@ export const DEFAULT_DRAW_COLOR = DRAW_COLORS[2]
 export const DEFAULT_DRAW_WIDTH = 2
 
 /** localStorage 持久化 key */
-export const DRAWING_STORAGE_KEY = "qihuo_drawings"
+export const DRAWING_STORAGE_KEY = "app_drawings"
+export const LEGACY_DRAWING_STORAGE_KEY = "qihuo_drawings"
 
 /** 工具栏按钮配置（label 用中文，符合项目 UI 习惯） */
 export interface ToolOption {

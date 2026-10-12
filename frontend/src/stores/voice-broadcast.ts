@@ -33,7 +33,8 @@ export interface VoiceBroadcastSettings {
   rate: number
 }
 
-const STORAGE_KEY = "qihuo.voice-broadcast.v1"
+const STORAGE_KEY = "app.voice-broadcast.v1"
+const LEGACY_STORAGE_KEY = "qihuo.voice-broadcast.v1"
 
 interface VoiceBroadcastState {
   settings: VoiceBroadcastSettings
@@ -66,7 +67,9 @@ export const useVoiceBroadcastStore = create<VoiceBroadcastState>()((set, get) =
     let loaded: VoiceBroadcastSettings = sanitizeSettings(null) as VoiceBroadcastSettings
     if (typeof window !== "undefined") {
       try {
-        const raw = localStorage.getItem(STORAGE_KEY)
+        const raw =
+          localStorage.getItem(STORAGE_KEY) ||
+          localStorage.getItem(LEGACY_STORAGE_KEY)
         if (raw) loaded = sanitizeSettings(JSON.parse(raw)) as VoiceBroadcastSettings
       } catch {
         // 损坏配置回落默认
