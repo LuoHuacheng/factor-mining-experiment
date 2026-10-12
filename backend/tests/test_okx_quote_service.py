@@ -86,3 +86,27 @@ async def test_snapshot_once_writes_all_tickers():
     count = await svc.snapshot_once()
     assert count == 1
     assert quote_key("live", "btc-usdt-swap") in redis.store
+
+
+@pytest.mark.asyncio
+async def test_virtual_mode_writes_virtual_namespace():
+    redis = _FakeRedis()
+    svc = OkxQuoteService(redis, mode="virtual", source="okx_demo")
+    await svc.write_quote(_quote("btc-usdt-swap", 61000.0))
+
+    unified = quote_key("virtual", "btc-usdt-swap")
+    source = source_quote_key("okx_demo", "btc-usdt-swap", "virtual")
+    assert unified in redis.store
+    assert source in redis.store
+    assert quote_key("live", "btc-usdt-swap") not in redis.store
+
+
+@pytest.mark.asyncio
+async def test_virtual_mode_snapshot_writes_virtual_keys():
+    redis = _FakeRedis()
+    svc = OkxQuoteService(redis, client=_FakeClient(), mode="virtual", source="okx_demo")
+    count = await svc.snapshot_once()
+    assert count == 1
+    assert quote_key("virtual", "btc-usdt-swap") in redis.store
+    assert source_quote_key("okx_demo", "btc-usdt-swap", "virtual") in redis.store
+

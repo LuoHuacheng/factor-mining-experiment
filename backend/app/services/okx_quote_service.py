@@ -33,17 +33,21 @@ _SNAPSHOT_INTERVAL = 60.0
 
 
 class OkxQuoteService:
-    """把 OKX 行情写进 Redis 的 live 命名空间"""
+    """把 OKX 行情写进 Redis 的对应 trading_mode 命名空间"""
 
     def __init__(
         self,
         redis_conn: Any,
         client: OkxRestClient | None = None,
         ws: OkxPublicWs | None = None,
+        mode: str = MODE_LIVE,
+        source: str = SOURCE_OKX,
     ) -> None:
         self._redis = redis_conn
-        self._client = client or OkxRestClient()
-        self._ws = ws or OkxPublicWs()
+        self._mode = mode
+        self._source = source
+        self._client = client or OkxRestClient(demo=(mode != MODE_LIVE))
+        self._ws = ws or OkxPublicWs(demo=(mode != MODE_LIVE))
         self._tasks: list[asyncio.Task] = []
 
     async def write_quote(self, quote: dict[str, Any]) -> bool:
@@ -55,10 +59,12 @@ class OkxQuoteService:
         payload = json.dumps(normalized, ensure_ascii=False)
         try:
             await self._redis.set(
-                quote_key(MODE_LIVE, symbol), payload, ex=_QUOTE_TTL
+                quote_key(self._mode, symbol), payload, ex=_QUOTE_TTL
             )
             await self._redis.set(
-                source_quote_key(SOURCE_OKX, symbol), payload, ex=_QUOTE_TTL
+                source_quote_key(self._source, symbol, self._mode),
+                payload,
+                ex=_QUOTE_TTL,
             )
         except Exception as exc:
             logger.warning("OKX 报价写入 Redis 失败 %s：%s", symbol, exc)
