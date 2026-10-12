@@ -1,0 +1,49 @@
+# 本地容器化运行 —— docker-compose.yml 的 override
+#
+# 用途：补上上游 compose 刻意不内置的 PostgreSQL（文档要求自备），
+# 并让 backend 等它就绪。端口/镜像等其余差异一律用环境变量控制，
+# 因为 compose 的 override 对 ports 是「追加」语义，写在这里会多出一个映射。
+#
+# 启动：
+#   QIHUO_BACKEND_IMAGE=qihuo-backend:local \
+#   QIHUO_FRONTEND_IMAGE=qihuo-frontend:local \
+#   BACKEND_HOST_PORT=8008 FRONTEND_HOST_PORT=8009 \
+#   docker compose -f docker-compose.yml -f docker-compose.local.yml \
+#     --profile sina-bridge up -d
+
+services:
+  postgres:
+    image: postgres:18
+    container_name: qihuo-postgres
+    environment:
+      POSTGRES_USER: "${POSTGRES_USER:-qihuo}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?需要 .env 中的 POSTGRES_PASSWORD}"
+      POSTGRES_DB: "${POSTGRES_DB:-qihuo}"
+    # 只绑回环，供宿主 psql/pg_dump 使用；容器间走 qihuo-net 服务名。
+    ports:
+      - "127.0.0.1:${QIHUO_PG_HOST_PORT:-5433}:5432"
+    volumes:
+      # postgres:18 起数据目录带主版本子目录，必须挂父目录
+      # （挂 /var/lib/postgresql/data 会被镜像判为「未使用的挂载」并拒绝启动）
+      - qihuo-postgres-data:/var/lib/postgresql
+    restart: unless-stopped
+    networks:
+      - qihuo-net
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          pg_isready -U ${POSTGRES_USER:-qihuo}
+          -d ${POSTGRES_DB:-qihuo}
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
+
+  backend:
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  qihuo-postgres-data:
