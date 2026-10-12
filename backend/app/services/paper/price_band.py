@@ -46,11 +46,12 @@ async def resolve_last_price(
                     return Decimal(str(last))
         except Exception:
             pass
-        # 统一报价缺失：回落 sina 源快照（真实市场价，含收盘后）
+        # 统一报价缺失：回落 okx / okx_demo 源快照（真实市场价，含断线后）
         try:
             from app.services.market_keys import source_quote_key
 
-            raw = await redis_conn.get(source_quote_key("sina", symbol_l))
+            src_name = "okx_demo" if str(trading_mode or "").lower() == "virtual" else "okx"
+            raw = await redis_conn.get(source_quote_key(src_name, symbol_l, trading_mode))
             if raw:
                 if isinstance(raw, bytes):
                     raw = raw.decode("utf-8", errors="ignore")

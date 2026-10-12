@@ -42,15 +42,21 @@ def quote_key(trading_mode: str | None, symbol: str) -> str:
     return f"market:{mode_ns(trading_mode)}:quote:{symbol.strip().lower()}"
 
 
-def source_quote_key(source: str, symbol: str) -> str:
-    """live 原始行情源快照；与下游统一 quote 隔离。"""
+def source_quote_key(
+    source: str, symbol: str, trading_mode: str | None = None
+) -> str:
+    """原始行情源快照；与下游统一 quote 隔离。"""
     src = source.strip().lower()
     sym = symbol.strip().lower()
-    return f"market:live:source:{src}:quote:{sym}"
+    ns = mode_ns(trading_mode) if trading_mode else "live"
+    return f"market:{ns}:source:{src}:quote:{sym}"
 
 
-def source_quote_scan_pattern(source: str) -> str:
-    return f"market:live:source:{source.strip().lower()}:quote:*"
+def source_quote_scan_pattern(
+    source: str, trading_mode: str | None = None
+) -> str:
+    ns = mode_ns(trading_mode) if trading_mode else "live"
+    return f"market:{ns}:source:{source.strip().lower()}:quote:*"
 
 
 def orderbook_key(trading_mode: str | None, symbol: str) -> str:
