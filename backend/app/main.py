@@ -854,6 +854,18 @@ async def lifespan(application: FastAPI):
         logger.warning("OKX 品种表拉取失败（行情将不可用）：%s", exc)
     application.state.okx_client = okx_client
 
+    # OKX 行情服务：WS 增量 + REST 快照兜底
+    from app.data.instruments import all_instruments
+    from app.services.okx_quote_service import OkxQuoteService
+
+    okx_quotes = OkxQuoteService(redis_conn, client=okx_client)
+    symbols = [i.symbol for i in all_instruments()][:200]
+    if symbols:
+        await okx_quotes.start(symbols)
+    else:
+        logger.warning("OKX 品种表为空，行情服务未启动")
+    application.state.okx_quotes = okx_quotes
+
     # 注入会话工厂供模拟挂单撮合使用，再启动定时任务
     set_session_factory(session_factory)
     await start_scheduler(redis_conn)
@@ -871,6 +883,7 @@ async def lifespan(application: FastAPI):
 
     # 关闭：释放资源
     logger.info("正在关闭应用...")
+    await okx_quotes.stop()
     await okx_client.aclose()
     await stop_ops_alert_subscriber()
     await stop_big_order_subscriber()
