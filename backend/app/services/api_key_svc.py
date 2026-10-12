@@ -15,7 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.api_key import ApiKey
 
-_KEY_PREFIX = "qihuo_"
+_KEY_PREFIX = "ak_"
 # 明文前缀长度：存 key_prefix 用于列表掩码展示（前缀 + ****）
 _PREFIX_LEN = 12
 
@@ -25,7 +25,7 @@ def _now() -> datetime:
 
 
 def generate_raw_key() -> str:
-    """生成新 key 明文：qihuo_<urlsafe token>"""
+    """生成新 key 明文：ak_<urlsafe token>"""
     return f"{_KEY_PREFIX}{secrets.token_urlsafe(32)}"
 
 
