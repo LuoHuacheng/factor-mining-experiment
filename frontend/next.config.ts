@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 
 // 通过容器名访问 backend(同 docker network,不经过宿主端口)
 const BACKEND_URL =
-  process.env.BACKEND_URL ?? "http://qihuo-backend:8001";
+  process.env.BACKEND_URL ?? "http://backend:8001";
 
 const nextConfig: NextConfig = {
   output: "standalone",

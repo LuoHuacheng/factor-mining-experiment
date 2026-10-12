@@ -20,7 +20,7 @@ function resolveBackendUrl(): string {
   if (fromEnv && fromEnv.trim().length > 0) {
     return fromEnv.replace(/\/$/, "")
   }
-  return "http://qihuo-backend:8001"
+  return "http://backend:8001"
 }
 
 /** POST /api/backtest/run → 后端同步回测 */

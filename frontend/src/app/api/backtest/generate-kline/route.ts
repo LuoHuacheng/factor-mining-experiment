@@ -17,7 +17,7 @@ function resolveBackendUrl(): string {
   if (fromEnv && fromEnv.trim().length > 0) {
     return fromEnv.replace(/\/$/, "")
   }
-  return "http://qihuo-backend:8001"
+  return "http://backend:8001"
 }
 
 /** POST /api/backtest/generate-kline → 后端生成合成 K 线 */

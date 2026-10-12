@@ -21,10 +21,8 @@ _BJ_TZ = timezone(timedelta(hours=8))
 
 # 系统健康：关注的容器（status=running/Exited 等）
 _WATCH_CONTAINERS = (
-    "qihuo-backend",
-    "qihuo-frontend",
-    "qihuo-ctp-bridge",
-    "qihuo-ctp-bridge-virtual",
+    "backend",
+    "frontend",
 )
 
 

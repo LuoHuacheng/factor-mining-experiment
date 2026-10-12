@@ -164,7 +164,7 @@ export default function AdminDashboardPage(): React.JSX.Element {
           </CardHeader>
           <CardContent className="grid grid-cols-2 gap-2 text-sm">
             {containers.map(([name, status]) => {
-              const short = name.replace("qihuo-", "")
+              const short = name.replace(/^qihuo-/, "")
               const ok = status === "running"
               return (
                 <div
