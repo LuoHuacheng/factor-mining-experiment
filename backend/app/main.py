@@ -845,26 +845,37 @@ async def lifespan(application: FastAPI):
     # 拉取 OKX 品种规格（失败不阻塞启动：品种表为空时行情链路自然降级）
     from app.connectors.okx.client import OkxRestClient
     from app.connectors.okx.instruments import refresh_instruments
+    from app.data.instruments import all_instruments
+    from app.services.okx_quote_service import OkxQuoteService
 
-    okx_client = OkxRestClient()
+    okx_client = OkxRestClient(demo=False)
+    okx_demo_client = OkxRestClient(demo=True)
     try:
         count = await refresh_instruments(okx_client)
         logger.info("OKX 品种表就绪：%d 条", count)
     except Exception as exc:
         logger.warning("OKX 品种表拉取失败（行情将不可用）：%s", exc)
     application.state.okx_client = okx_client
+    application.state.okx_demo_client = okx_demo_client
 
-    # OKX 行情服务：WS 增量 + REST 快照兜底
-    from app.data.instruments import all_instruments
-    from app.services.okx_quote_service import OkxQuoteService
-
-    okx_quotes = OkxQuoteService(redis_conn, client=okx_client)
+    # OKX 行情服务：实盘 (live) + 模拟盘 (virtual) 双轨启动
     symbols = [i.symbol for i in all_instruments()][:200]
+    okx_quotes_live = OkxQuoteService(
+        redis_conn, client=okx_client, mode="live", source="okx"
+    )
+    okx_quotes_virtual = OkxQuoteService(
+        redis_conn, client=okx_demo_client, mode="virtual", source="okx_demo"
+    )
+
     if symbols:
-        await okx_quotes.start(symbols)
+        await okx_quotes_live.start(symbols)
+        await okx_quotes_virtual.start(symbols)
     else:
         logger.warning("OKX 品种表为空，行情服务未启动")
-    application.state.okx_quotes = okx_quotes
+
+    application.state.okx_quotes = okx_quotes_live
+    application.state.okx_quotes_live = okx_quotes_live
+    application.state.okx_quotes_virtual = okx_quotes_virtual
 
     # 注入会话工厂供模拟挂单撮合使用，再启动定时任务
     set_session_factory(session_factory)
@@ -883,8 +894,10 @@ async def lifespan(application: FastAPI):
 
     # 关闭：释放资源
     logger.info("正在关闭应用...")
-    await okx_quotes.stop()
+    await okx_quotes_live.stop()
+    await okx_quotes_virtual.stop()
     await okx_client.aclose()
+    await okx_demo_client.aclose()
     await stop_ops_alert_subscriber()
     await stop_big_order_subscriber()
     await stop_notify_subscriber()
