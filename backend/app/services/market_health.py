@@ -94,7 +94,7 @@ async def collect_market_health(
             "bridge_heartbeat": virt_hb,
             "hint": None
             if virt_ok
-            else "无 virtual 行情：请启动 qihuo-ctp-bridge-virtual",
+            else "无 virtual 行情：请启动 ctp-bridge-virtual",
         },
         "ok": live_ok and virt_ok,
     }

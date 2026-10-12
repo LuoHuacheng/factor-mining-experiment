@@ -182,7 +182,7 @@ class SystemSettingsUpdateRequest(BaseModel):
     ctp_sim_investor_id: str | None = Field(
         default=None,
         max_length=32,
-        description="CTP 中转模拟账号（任意值可登录，默认 qihuo_sim）",
+        description="CTP 中转模拟账号（任意值可登录）",
     )
     ctp_sim_password: str | None = Field(
         default=None,

@@ -332,7 +332,7 @@ async def _init_tables(engine) -> None:
             text(
                 "ALTER TABLE system_settings "
                 "ADD COLUMN IF NOT EXISTS ctp_sim_investor_id VARCHAR(32) "
-                "NOT NULL DEFAULT 'qihuo_sim'"
+                "NOT NULL DEFAULT ''"
             )
         )
         await conn.execute(

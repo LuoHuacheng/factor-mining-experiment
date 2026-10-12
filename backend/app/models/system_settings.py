@@ -237,8 +237,8 @@ class SystemSettings(Base):
     ctp_sim_investor_id: Mapped[str] = mapped_column(
         String(32),
         nullable=False,
-        default="qihuo_sim",
-        server_default="qihuo_sim",
+        default="",
+        server_default="",
         comment="CTP 中转模拟账号（任意值可登录）",
     )
     # 密码（AES-256-GCM 加密存储，接口仅回显脱敏值；任意值可登录）

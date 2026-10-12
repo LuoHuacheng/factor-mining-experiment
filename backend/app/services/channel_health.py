@@ -110,7 +110,7 @@ async def probe_channel_health(
             pass
 
     if ch == CHANNEL_SINA:
-        # sina：桥心跳（qihuo-sina-bridge 容器写）+ trade_date 双重判定。
+        # sina：桥心跳（sina-bridge 容器写）+ trade_date 双重判定。
         # 心跳新鲜说明桥在轮询；trade_date=今天说明数据确实落到了统一键。
         import time as _time
 

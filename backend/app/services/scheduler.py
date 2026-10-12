@@ -52,7 +52,7 @@ _MASTER_INTERVAL = 5
 # 超窗的陈旧 quote 不得再喂 forming(sina 桥 vvtr 供数时 60s 轮询,取 90s)
 _SOURCE_STALE_SECONDS = 90
 
-# （全月份合约行情拉取已移至 qihuo-sina-bridge 容器，见 app/connectors/sina/bridge.py）
+# （全月份合约行情拉取已移至 sina-bridge 容器，见 app/connectors/sina/bridge.py）
 
 # scheduler 选主锁:持有锁的 worker 才跑后台任务,避免多 worker 重复写 Redis
 _SCHEDULER_LOCK_KEY = "scheduler:master-lock"

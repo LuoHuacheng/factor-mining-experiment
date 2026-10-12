@@ -46,7 +46,7 @@ const DEFAULT_SETTINGS: SystemSettings = {
   ctp_sim_enabled: false,
   ctp_sim_md_front: "",
   ctp_sim_broker_id: "9999",
-  ctp_sim_investor_id: "qihuo_sim",
+  ctp_sim_investor_id: "",
   ctp_sim_password_masked: "",
   ctp_sim_password_set: false,
   updated_at: null,

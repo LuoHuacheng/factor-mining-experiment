@@ -26,7 +26,7 @@ import redis.asyncio as aioredis
 
 logger = logging.getLogger("app.kline_provider")
 
-# 合法 K 线源（tencent 接口不可用已移除；remote 由 QIHUO_KLINE_REMOTE_BASE 启用）
+# 合法 K 线源（tencent 接口不可用已移除；remote 由 KLINE_REMOTE_BASE 启用）
 # simnow 从 PG 读取（VVTR 权威修正 + 实时固化的数据）——kline_sync 定时把
 # VVTR 权威值写入 PG，是链内最可信的源
 # vvtr 已退出客户端拉取链（限频 1 req/s 扛不住多客户端），仅由 kline_sync

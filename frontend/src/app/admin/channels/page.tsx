@@ -70,7 +70,7 @@ export default function AdminChannelsPage(): React.JSX.Element {
     enabled: false,
     md_front: "",
     broker_id: "9999",
-    investor_id: "qihuo_sim",
+    investor_id: "",
     password: "",
   })
   const [simSaving, setSimSaving] = useState(false)

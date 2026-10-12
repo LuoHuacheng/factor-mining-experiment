@@ -56,7 +56,7 @@ class Settings(BaseSettings):
     openctp_md_front_sim: str = "tcp://trading.openctp.cn:30011"
     openctp_app_id: str = ""
     openctp_auth_code: str = ""
-    openctp_user_product_info: str = "qihuo_oc"
+    openctp_user_product_info: str = ""
 
     # 天勤 TqSdk（免费版需快期账户；密码勿入库，由 .env 注入）
     tqsdk_user: str = ""
@@ -69,14 +69,14 @@ class Settings(BaseSettings):
     real_ctp_md_front: str = ""
     real_ctp_app_id: str = ""
     real_ctp_auth_code: str = ""
-    real_ctp_user_product_info: str = "qihuo_real"
+    real_ctp_user_product_info: str = ""
 
     # CTP 行情前置（ctp_sim 渠道：用户在管理端自行填写，此处默认空）
     ctp_sim_md_front: str = ""
     ctp_sim_broker_id: str = "9999"
-    ctp_sim_investor_id: str = "qihuo_sim"
+    ctp_sim_investor_id: str = ""
     ctp_sim_password: str = ""
-    ctp_sim_user_product_info: str = "qihuo_sim"
+    ctp_sim_user_product_info: str = ""
 
     # K 线远端兜底源（如 http://192.0.2.10:8002）：
     # 本地所有源不可用（网络/封禁）时，从该服务器 /api/market/kline 中转历史

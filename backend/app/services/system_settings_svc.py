@@ -161,7 +161,7 @@ def settings_to_dict(row: SystemSettings) -> dict:
         "ctp_sim_md_front": str(getattr(row, "ctp_sim_md_front", "") or ""),
         "ctp_sim_broker_id": str(getattr(row, "ctp_sim_broker_id", "") or "9999"),
         "ctp_sim_investor_id": str(
-            getattr(row, "ctp_sim_investor_id", "") or "qihuo_sim"
+            getattr(row, "ctp_sim_investor_id", "") or ""
         ),
         # 密码只回显脱敏值，明文永不出接口
         "ctp_sim_password_masked": _mask_vvtr_key(
@@ -395,7 +395,7 @@ async def update_system_settings(
         row.ctp_sim_broker_id = broker or "9999"
     if "ctp_sim_investor_id" in payload and payload["ctp_sim_investor_id"] is not None:
         investor = str(payload["ctp_sim_investor_id"]).strip()[:32]
-        row.ctp_sim_investor_id = investor or "qihuo_sim"
+        row.ctp_sim_investor_id = investor or ""
     # 密码：非空明文 → 加密落库；空串/None → 保持不变（前端留空=不修改）
     if "ctp_sim_password" in payload:
         plain = str(payload["ctp_sim_password"] or "").strip()

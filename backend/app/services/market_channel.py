@@ -1,7 +1,7 @@
 """行情渠道路由 —— sina / openctp / real_ctp / vvtr / ctp_sim（开源版：默认仅新浪）
 
 管理端 system_settings.market_data_channel：
-- sina：新浪源键（qihuo-sina-bridge 容器轮询写 source 键，本进程只读 Redis）
+- sina：新浪源键（sina-bridge 容器轮询写 source 键，本进程只读 Redis）
 - openctp_724：openctp 7×24（trading.openctp.cn:30011，虚拟盘固定渠道）
 - openctp_sim：openctp 仿真（行情宜直连实盘前置，见 .env）
 - real_ctp：真实期货公司 CTP（Level-1 一档，无风控）
@@ -148,7 +148,7 @@ def resolve_ctp_login(channel: str | None) -> dict[str, str]:
             "app_id": _env("REAL_CTP_APP_ID", ""),
             "auth_code": _env("REAL_CTP_AUTH_CODE", ""),
             "user_product_info": (
-                _env("REAL_CTP_USER_PRODUCT_INFO", "qihuo_real") or "qihuo_real"
+                _env("REAL_CTP_USER_PRODUCT_INFO", "") or ""
             )[:10],
             "md_front": resolve_ctp_md_front(ch),
             "channel": CHANNEL_REAL_CTP,
@@ -175,7 +175,7 @@ def resolve_ctp_login(channel: str | None) -> dict[str, str]:
             "password": password,
             "app_id": _env("OPENCTP_APP_ID", ""),
             "auth_code": _env("OPENCTP_AUTH_CODE", ""),
-            "user_product_info": (_env("OPENCTP_USER_PRODUCT_INFO", "qihuo_oc") or "qihuo_oc")[
+            "user_product_info": (_env("OPENCTP_USER_PRODUCT_INFO", "") or "")[
                 :10
             ],
             "md_front": resolve_ctp_md_front(ch),
@@ -186,12 +186,12 @@ def resolve_ctp_login(channel: str | None) -> dict[str, str]:
         # CTP 中转模拟：任意账号密码可登录（2026-10-11 实测），默认占位值即可
         return {
             "broker_id": _env("CTP_SIM_BROKER_ID", "9999") or "9999",
-            "investor_id": _env("CTP_SIM_INVESTOR_ID", "qihuo_sim") or "qihuo_sim",
-            "password": _env("CTP_SIM_PASSWORD", "qihuo_sim") or "qihuo_sim",
+            "investor_id": _env("CTP_SIM_INVESTOR_ID", "") or "",
+            "password": _env("CTP_SIM_PASSWORD", "") or "",
             "app_id": "",
             "auth_code": "",
             "user_product_info": (
-                _env("CTP_SIM_USER_PRODUCT_INFO", "qihuo_sim") or "qihuo_sim"
+                _env("CTP_SIM_USER_PRODUCT_INFO", "") or ""
             )[:10],
             "md_front": resolve_ctp_md_front(ch),
             "channel": ch,
@@ -309,7 +309,7 @@ async def collect_source_quotes_from_redis(
 
 
 # ========== sina 源键 ==========
-# 新浪行情由独立容器 qihuo-sina-bridge 轮询写源键（TTL 7d，带 recv_ts），
+# 新浪行情由独立容器 sina-bridge 轮询写源键（TTL 7d，带 recv_ts），
 # 本进程只读不拉（新浪出网集中在桥容器；轮询节奏自适应——推送源供数 60s、
 # 交易时段 3s、休市 60s——见 app/connectors/sina/bridge.py）。
 # 源键缺失/陈旧由 merge 层 90s freshness 判定自然表达，无需本层兜底。
@@ -326,7 +326,7 @@ async def fetch_quotes_for_channel(
         quotes = await collect_quotes_from_redis(redis_conn, MODE_VIRTUAL)
         if not quotes:
             logger.warning(
-                "virtual 盘无 Redis 行情（请确认 qihuo-ctp-bridge-virtual 已启动）"
+                "virtual 盘无 Redis 行情（请确认 ctp-bridge-virtual 已启动）"
             )
         return quotes
 
@@ -335,7 +335,7 @@ async def fetch_quotes_for_channel(
         active_channel = await read_channel_from_redis(redis_conn, MODE_LIVE)
     push_quotes: list[dict[str, Any]] = []
     push_source = ""
-    # sina 源键（qihuo-sina-bridge 写入）：读 Redis，本进程不出网。
+    # sina 源键（sina-bridge 写入）：读 Redis，本进程不出网。
     # 盘口深度 5 档 → 1 档（sina 仅 bid1/ask1）。
     sina_quotes = await collect_source_quotes_from_redis(redis_conn, CHANNEL_SINA)
 

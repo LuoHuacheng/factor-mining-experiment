@@ -46,10 +46,10 @@ PREFLIGHT_KEY = "market:channel:preflight:last"
 
 # 已部署渠道 → bridge 容器名（未列出的渠道无独立容器，重启为无操作）
 CHANNEL_TO_CONTAINER: dict[str, str] = {
-    CHANNEL_OPENCTP_724: "qihuo-ctp-bridge-virtual",
-    CHANNEL_REAL_CTP: "qihuo-ctp-bridge",
+    CHANNEL_OPENCTP_724: "ctp-bridge-virtual",
+    CHANNEL_REAL_CTP: "ctp-bridge",
     # ctp_sim 复用 live bridge 容器（单容器单渠道，重启时按 Redis 渠道重建会话）
-    CHANNEL_CTP_SIM: "qihuo-ctp-bridge",
+    CHANNEL_CTP_SIM: "ctp-bridge",
 }
 
 
