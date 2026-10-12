@@ -45,3 +45,4 @@ backend/skills/
 
 # ZCode agent 本地产物（计划/会话）
 .zcode/
+.pi/

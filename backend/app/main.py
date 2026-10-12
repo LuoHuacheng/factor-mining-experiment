@@ -19,7 +19,6 @@ from app.api.ai_skills import router as ai_skills_router
 from app.api.ai_tools import router as ai_tools_router
 from app.api.kline import router as kline_router
 from app.api.market import router as market_router
-from app.api.contracts import router as contracts_router
 from app.api.news import router as news_router
 from app.api.users import router as users_router
 from app.api.watchlist import router as watchlist_router
@@ -904,7 +903,6 @@ def create_app() -> FastAPI:
     application.include_router(users_router)
     application.include_router(kline_router)
     application.include_router(market_router)
-    application.include_router(contracts_router)
     application.include_router(news_router)
     application.include_router(watchlist_router)
     application.include_router(paper_router)
