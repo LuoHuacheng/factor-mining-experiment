@@ -20,7 +20,7 @@ from app.services.ai_trading.task.task_svc import get_task
 from app.services.paper.account_svc import get_account_summary
 from app.services.quota.quota_svc import get_effective_limits
 
-logger = logging.getLogger("qihuo.ai_trading")
+logger = logging.getLogger("app.ai_trading")
 
 
 def _now_utc() -> datetime:

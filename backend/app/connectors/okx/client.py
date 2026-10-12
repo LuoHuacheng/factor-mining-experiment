@@ -11,7 +11,7 @@ from typing import Any
 
 import httpx
 
-logger = logging.getLogger("qihuo.okx.client")
+logger = logging.getLogger("app.okx.client")
 
 OKX_BASE_URL = "https://www.okx.com"
 

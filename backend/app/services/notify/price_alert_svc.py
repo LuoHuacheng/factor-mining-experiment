@@ -25,7 +25,7 @@ from app.services.notify.notify_svc import (
     notification_to_dict,
 )
 
-logger = logging.getLogger("qihuo.price_alert_svc")
+logger = logging.getLogger("app.price_alert_svc")
 
 
 def price_alert_to_dict(item: PriceAlert) -> dict:

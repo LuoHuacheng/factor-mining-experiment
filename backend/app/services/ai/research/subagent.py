@@ -10,7 +10,7 @@ from app.services.ai.research.signals import score_product
 from app.services.ai.research.types import BatchResult, ProductRef, ProductSignal
 from app.services.ai.tools.market import tool_get_kline, tool_get_quote
 
-logger = logging.getLogger("qihuo.ai.research.subagent")
+logger = logging.getLogger("app.ai.research.subagent")
 
 # 批内同时调研的品种数上限
 _INNER_CONCURRENCY = 4

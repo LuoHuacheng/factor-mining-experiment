@@ -13,7 +13,7 @@ import redis.asyncio as aioredis
 SUPPORTED_PERIODS: tuple[str, ...] = ("1m", "5m", "15m", "30m", "60m", "1d")
 from app.services.kline import get_kline_history
 
-logger = logging.getLogger("qihuo.ai.tools_market")
+logger = logging.getLogger("app.ai.tools_market")
 _Q = "market:quote:"
 _R = "kline:realtime:"
 _BJ = timezone(timedelta(hours=8))

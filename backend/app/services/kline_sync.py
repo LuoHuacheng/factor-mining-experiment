@@ -27,7 +27,7 @@ from typing import Any
 
 import redis.asyncio as aioredis
 
-logger = logging.getLogger("qihuo.kline_sync")
+logger = logging.getLogger("app.kline_sync")
 
 # 修正的周期：分钟线写 kline_minute，日线写 kline_history
 SYNC_PERIODS_MINUTE = ["1m", "5m", "15m", "30m", "60m"]

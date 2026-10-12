@@ -15,7 +15,7 @@ from typing import Any
 
 import redis.asyncio as aioredis
 
-logger = logging.getLogger("qihuo.big_order_detect")
+logger = logging.getLogger("app.big_order_detect")
 
 # 大单检测市场基线（手）：超过即视为显著放量并推送原始事件。
 # 前端再按用户阈值二次判定。这是"全合约触发"的粗筛门槛。

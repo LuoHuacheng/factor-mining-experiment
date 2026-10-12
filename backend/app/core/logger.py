@@ -8,7 +8,7 @@ from pathlib import Path
 
 def setup_logger(log_level: str = "INFO") -> logging.Logger:
     """配置并返回应用日志器"""
-    logger = logging.getLogger("qihuo")
+    logger = logging.getLogger("app")
     logger.setLevel(getattr(logging, log_level.upper(), logging.INFO))
 
     # 避免重复添加 handler

@@ -29,7 +29,7 @@ from app.services.kline import (
 )
 from app.services.signal_universe import list_all_master_symbols
 
-logger = logging.getLogger("qihuo.kline_repair")
+logger = logging.getLogger("app.kline_repair")
 
 VERIFY_PERIODS = ("1m", "5m", "15m", "30m", "60m", "1d")
 VERIFY_DAYS = 3

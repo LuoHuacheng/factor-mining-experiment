@@ -29,7 +29,7 @@ from app.services.trading_hours import (
 # 北京时间（UTC+8）
 _BJ_TZ = timezone(timedelta(hours=8))
 
-logger = logging.getLogger("qihuo.kline")
+logger = logging.getLogger("app.kline")
 
 # Redis 缓存 key 前缀
 _HISTORY_KEY_PREFIX = "kline:history"

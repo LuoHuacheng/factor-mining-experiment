@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.factor_lab import FactorFavorite
 from app.services.factor_lab.scoring.decay import rolling_health
 
-logger = logging.getLogger("qihuo.factor_health")
+logger = logging.getLogger("app.factor_health")
 
 
 def _now() -> datetime:

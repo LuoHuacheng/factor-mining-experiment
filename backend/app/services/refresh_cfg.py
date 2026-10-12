@@ -21,7 +21,7 @@ from typing import Any
 
 import redis.asyncio as aioredis
 
-logger = logging.getLogger("qihuo.refresh_cfg")
+logger = logging.getLogger("app.refresh_cfg")
 
 CONFIG_KEY = "runtime:refresh_interval"
 _CONFIG_TTL = 300

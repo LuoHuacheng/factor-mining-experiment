@@ -20,7 +20,7 @@ from app.connectors.okx.ws import OkxPublicWs
 from app.data.quote_schema import normalize_quote_fields
 from app.services.market_keys import quote_key, source_quote_key
 
-logger = logging.getLogger("qihuo.okx.quote")
+logger = logging.getLogger("app.okx.quote")
 
 # 统一报价键 TTL：OKX 24/7，10 分钟无更新视为过期
 _QUOTE_TTL = 600

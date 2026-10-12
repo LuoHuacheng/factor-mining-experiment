@@ -13,7 +13,7 @@ from app.services.ai_trading.engine import evaluate_task
 from app.services.ai_trading.session_auto import sync_tasks_with_session
 from app.services.trading_hours import is_trading_hours
 
-logger = logging.getLogger("qihuo.ai_trading")
+logger = logging.getLogger("app.ai_trading")
 
 # 循环间隔
 _INTERVAL_TRADING = 2.0

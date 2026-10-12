@@ -28,7 +28,7 @@ from app.services.ai_trading.llm.prompts import (
 from app.services.crypto import decrypt
 from app.services.ai.providers.urls import resolve_endpoint
 
-logger = logging.getLogger("qihuo.ai_trading")
+logger = logging.getLogger("app.ai_trading")
 
 # 思考类模型名称启发式（capabilities 未标 thinking 时的兜底）：
 # deepseek-*-thinking / deepseek-r1 / *-reasoner / o1/o3/o4-mini 等

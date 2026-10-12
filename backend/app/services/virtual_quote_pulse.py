@@ -21,7 +21,7 @@ import redis.asyncio as aioredis
 
 from app.services.market_keys import get_quote_json, write_keys_for_quote
 
-logger = logging.getLogger("qihuo.virtual_quote_pulse")
+logger = logging.getLogger("app.virtual_quote_pulse")
 
 _BJ_TZ = timezone(timedelta(hours=8))
 _TTL = 7 * 24 * 3600

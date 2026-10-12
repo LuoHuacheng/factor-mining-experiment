@@ -37,7 +37,7 @@ from app.services.market import (
 from app.services.news import collect_and_cache_news
 from app.services.trading_hours import is_trading_hours
 
-logger = logging.getLogger("qihuo.scheduler")
+logger = logging.getLogger("app.scheduler")
 
 # 交易时段拉取间隔（秒）
 _FETCH_INTERVAL_TRADING = 1

@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.services.notify.trade_tick_svc import list_ticks, today_trading_day
 
-logger = logging.getLogger("qihuo.ai.tools_market")
+logger = logging.getLogger("app.ai.tools_market")
 
 # 返回给模型的 Top 大单条数上限
 _TOP_N = 15

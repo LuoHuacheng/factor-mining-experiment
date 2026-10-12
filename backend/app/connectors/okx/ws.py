@@ -17,7 +17,7 @@ import websockets
 
 from app.connectors.okx.market import ticker_to_quote
 
-logger = logging.getLogger("qihuo.okx.ws")
+logger = logging.getLogger("app.okx.ws")
 
 OKX_PUBLIC_WS = "wss://ws.okx.com:8443/ws/v5/public"
 OKX_DEMO_PUBLIC_WS = "wss://wspap.okx.com:8443/ws/v5/public"

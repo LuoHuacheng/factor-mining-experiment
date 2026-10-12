@@ -18,7 +18,7 @@ from app.services.notify.notify_svc import (
     ensure_notify_setting,
 )
 
-logger = logging.getLogger("qihuo.trade_notify")
+logger = logging.getLogger("app.trade_notify")
 
 
 def publish_task_order_filled(

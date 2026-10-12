@@ -15,7 +15,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-logger = logging.getLogger("qihuo.okx.market")
+logger = logging.getLogger("app.okx.market")
 
 _TICKERS_PATH = "/api/v5/market/tickers"
 

@@ -11,7 +11,7 @@ import logging
 
 import edge_tts
 
-logger = logging.getLogger("qihuo.ai_anchor")
+logger = logging.getLogger("app.ai_anchor")
 
 # 云端自然音色白名单（前端下拉与此一致,GET /api/ai-anchor/voices 下发）
 CLOUD_VOICES: list[dict[str, str]] = [

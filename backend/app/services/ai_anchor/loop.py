@@ -17,7 +17,7 @@ from app.models.ai_anchor import AIAnchorTask
 from app.services.ai_anchor.engine import evaluate_anchor
 from app.services.ai_anchor.svc import utc_now
 
-logger = logging.getLogger("qihuo.ai_anchor")
+logger = logging.getLogger("app.ai_anchor")
 
 # 扫描间隔（秒）：启动/恢复后最多延迟一个扫描周期出首轮播报
 _SCAN_INTERVAL = 15.0

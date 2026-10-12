@@ -23,7 +23,7 @@ from app.services.paper.order_fill import (
     now_utc,
 )
 
-logger = logging.getLogger("qihuo.paper.pending_fill")
+logger = logging.getLogger("app.paper.pending_fill")
 
 
 async def fill_pending_open(

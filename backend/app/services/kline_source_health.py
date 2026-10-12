@@ -19,7 +19,7 @@ from typing import Any
 
 import redis.asyncio as aioredis
 
-logger = logging.getLogger("qihuo.kline_source_health")
+logger = logging.getLogger("app.kline_source_health")
 
 # 健康键前缀（与 kline_source_cfg 的 config 键并列）
 HEALTH_KEY_PREFIX = "kline:source:health"

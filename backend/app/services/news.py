@@ -9,7 +9,7 @@ from app.data.instruments import find_matching_symbols
 from app.data.news_fetcher import fetch_futures_news
 from app.schemas.news import NewsItem
 
-logger = logging.getLogger("qihuo.news_service")
+logger = logging.getLogger("app.news_service")
 
 # Redis 缓存 key
 _KEY_LATEST = "news:latest"

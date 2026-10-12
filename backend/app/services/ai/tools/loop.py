@@ -14,7 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.services.ai.tools import execute_tool
 
-logger = logging.getLogger("qihuo.ai.tool_loop")
+logger = logging.getLogger("app.ai.tool_loop")
 
 TOOL_RETRY_COUNT = 1
 

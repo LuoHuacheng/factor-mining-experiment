@@ -8,7 +8,7 @@ import httpx
 
 from app.schemas.news import ArticleContent
 
-logger = logging.getLogger("qihuo.article_fetcher")
+logger = logging.getLogger("app.article_fetcher")
 
 _TIMEOUT = 10
 _HEADERS = {

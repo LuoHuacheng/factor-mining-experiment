@@ -10,7 +10,7 @@ import redis.asyncio as aioredis
 
 from app.services.market_keys import get_quote_json, orderbook_key
 
-logger = logging.getLogger("qihuo.ai.tools_market")
+logger = logging.getLogger("app.ai.tools_market")
 
 
 def _redis_json(raw: Any) -> dict[str, Any] | None:

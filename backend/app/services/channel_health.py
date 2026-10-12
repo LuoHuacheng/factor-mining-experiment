@@ -29,7 +29,7 @@ from app.services.market_channel import (
     normalize_channel,
 )
 
-logger = logging.getLogger("qihuo.channel_health")
+logger = logging.getLogger("app.channel_health")
 
 # 心跳 age 阈值（秒）
 _AGE_GREEN = 30.0

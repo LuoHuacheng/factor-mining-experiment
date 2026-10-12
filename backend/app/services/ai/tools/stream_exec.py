@@ -8,7 +8,7 @@ from typing import Any, AsyncIterator
 
 from app.services.ai.providers.base import StreamEvent
 
-logger = logging.getLogger("qihuo.ai.stream_exec")
+logger = logging.getLogger("app.ai.stream_exec")
 
 # 支持中途推送进度的工具名
 STREAMABLE_TOOLS: frozenset[str] = frozenset({"research_products"})

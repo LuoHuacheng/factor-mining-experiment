@@ -34,7 +34,7 @@ from app.services.trading_hours import get_session_status, is_near_day_close
 
 from app.services.ai_trading.task.run_log_svc import write_run_log
 
-logger = logging.getLogger("qihuo.ai_trading")
+logger = logging.getLogger("app.ai_trading")
 
 
 def _now_utc() -> datetime:

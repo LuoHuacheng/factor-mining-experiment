@@ -19,7 +19,7 @@ from app.services.market import (
     generate_trades,
 )
 
-logger = logging.getLogger("qihuo.virtual_market_side")
+logger = logging.getLogger("app.virtual_market_side")
 
 _BJ_TZ = timezone(timedelta(hours=8))
 

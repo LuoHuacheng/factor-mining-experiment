@@ -30,7 +30,7 @@ from app.models.ai_trading.task import AITradingTask
 from app.services.ai.providers.urls import resolve_endpoint
 from app.services.crypto import decrypt
 
-logger = logging.getLogger("qihuo.ai_trading")
+logger = logging.getLogger("app.ai_trading")
 
 # 决策模型客户端超时：Jev 延迟亚秒级，15s 足够宽裕
 _JEV_TIMEOUT_S = 15.0

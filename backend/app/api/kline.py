@@ -22,7 +22,7 @@ SUPPORTED_PERIODS: tuple[str, ...] = ("1m", "5m", "15m", "30m", "60m", "1d")
 from app.schemas.kline import KlineBundleResponseSchema, KlineResponseSchema
 from app.services.kline import get_kline_history
 
-logger = logging.getLogger("qihuo.api.kline")
+logger = logging.getLogger("app.api.kline")
 
 router = APIRouter(prefix="/api/market", tags=["market"])
 _optional_bearer = HTTPBearer(auto_error=False)

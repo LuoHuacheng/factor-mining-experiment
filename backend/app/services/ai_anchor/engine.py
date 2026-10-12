@@ -21,7 +21,7 @@ from app.services.kline import get_kline_history
 from app.services.market_keys import get_quote_json
 from app.services.trading_hours import is_symbol_trading
 
-logger = logging.getLogger("qihuo.ai_anchor")
+logger = logging.getLogger("app.ai_anchor")
 
 # 指标暖区根数：拉 bar_count + WARMUP 计算，模型只看最新 bar_count 根
 WARMUP_BARS = 100

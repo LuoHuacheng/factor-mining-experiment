@@ -22,7 +22,7 @@ from app.services.ai_trading.task.position_pnl import source_for_task
 from app.services.paper.specs import resolve_trade_params
 from app.services.paper.trading_svc import place_order
 
-logger = logging.getLogger("qihuo.ai_trading")
+logger = logging.getLogger("app.ai_trading")
 
 
 def _task_mode(task: AITradingTask) -> str:

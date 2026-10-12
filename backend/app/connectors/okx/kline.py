@@ -14,7 +14,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-logger = logging.getLogger("qihuo.okx.kline")
+logger = logging.getLogger("app.okx.kline")
 
 _CANDLES_PATH = "/api/v5/market/candles"
 _HISTORY_CANDLES_PATH = "/api/v5/market/history-candles"

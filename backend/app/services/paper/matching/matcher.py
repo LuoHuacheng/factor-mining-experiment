@@ -24,7 +24,7 @@ from app.services.paper.matching.pending_fill import (
 from app.services.paper.specs import ensure_trade_settings, resolve_trade_params
 from app.services.trading_hours import is_symbol_trading
 
-logger = logging.getLogger("qihuo.paper.matcher")
+logger = logging.getLogger("app.paper.matcher")
 
 
 def should_fill(

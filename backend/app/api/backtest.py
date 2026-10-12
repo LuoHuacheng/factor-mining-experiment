@@ -27,7 +27,7 @@ from app.services.backtest.synthetic import (
     step_decision,
 )
 
-logger = logging.getLogger("qihuo.backtest")
+logger = logging.getLogger("app.backtest")
 router = APIRouter(prefix="/api/backtest", tags=["历史回测"])
 
 

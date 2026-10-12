@@ -31,7 +31,7 @@ from typing import Any
 
 import redis.asyncio as aioredis
 
-logger = logging.getLogger("qihuo.ops_alert")
+logger = logging.getLogger("app.ops_alert")
 
 # Redis 键
 ALERT_LOG_KEY = "market:alert:log"  # List，LPUSH，留最近 N 条

@@ -26,7 +26,7 @@ from app.services.ai.tools.market import (
     tool_get_quote,
 )
 
-logger = logging.getLogger("qihuo.ai.tools_registry")
+logger = logging.getLogger("app.ai.tools_registry")
 
 
 async def load_skill_tools(session: AsyncSession, user_id: str) -> list[ToolDef]:

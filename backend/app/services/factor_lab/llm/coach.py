@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.services.factor_lab.llm.coach_prompt import build_coach_messages
 from app.services.factor_lab.llm.llm_http import chat_once, extract_json_object
 
-logger = logging.getLogger("qihuo.factor_lab")
+logger = logging.getLogger("app.factor_lab")
 
 
 def clamp_coach_config(

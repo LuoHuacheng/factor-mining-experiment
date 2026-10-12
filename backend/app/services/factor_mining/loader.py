@@ -16,7 +16,7 @@ from app.data.instruments import get_code_for_symbol
 from app.services.kline import get_kline_history
 from app.services.kline_history import get_latest_history_date, query_history_bars
 
-logger = logging.getLogger("qihuo.factor_mining")
+logger = logging.getLogger("app.factor_mining")
 
 # 超长挖掘的根数上限（防止内存爆炸：几千根日线 × 大种群已足够）
 MAX_DAILY_BARS = 8000

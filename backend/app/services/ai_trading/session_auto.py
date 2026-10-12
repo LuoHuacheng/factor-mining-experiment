@@ -21,7 +21,7 @@ from app.services.ai_trading.task.task_lifecycle import (
 )
 from app.services.trading_hours import get_session_status, is_trading_hours
 
-logger = logging.getLogger("qihuo.ai_trading")
+logger = logging.getLogger("app.ai_trading")
 
 PAUSE_MARKET = "market_closed"
 PAUSE_USER = "user"

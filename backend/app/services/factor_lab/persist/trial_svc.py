@@ -13,7 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.factor_lab import FactorSearchTrial
 
-logger = logging.getLogger("qihuo.factor_lab")
+logger = logging.getLogger("app.factor_lab")
 
 
 def _slim_champions(champions: list[dict]) -> list[dict]:

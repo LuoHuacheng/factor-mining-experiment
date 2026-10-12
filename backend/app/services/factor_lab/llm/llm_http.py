@@ -16,7 +16,7 @@ from app.models.ai_provider import AIProvider
 from app.services.crypto import decrypt
 from app.services.ai.providers.urls import resolve_endpoint
 
-logger = logging.getLogger("qihuo.factor_lab")
+logger = logging.getLogger("app.factor_lab")
 
 
 async def load_user_model(

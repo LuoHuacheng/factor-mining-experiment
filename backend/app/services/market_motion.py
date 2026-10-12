@@ -22,7 +22,7 @@ from typing import Any
 
 from app.services.market_keys import mode_ns, quote_key
 
-logger = logging.getLogger("qihuo.market_motion")
+logger = logging.getLogger("app.market_motion")
 
 # 视为休市的静默阈值（秒）：流动品种开盘中价/量/档位 10 分钟完全无变化
 # 实际不可能发生；取宽裕值避免数据抖动误杀

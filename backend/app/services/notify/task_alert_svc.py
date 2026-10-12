@@ -15,7 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.trading_mode import normalize_trading_mode
 from app.models.task_alert import TaskAlertSetting
 
-logger = logging.getLogger("qihuo.task_alert_svc")
+logger = logging.getLogger("app.task_alert_svc")
 
 
 async def get_or_create_setting(

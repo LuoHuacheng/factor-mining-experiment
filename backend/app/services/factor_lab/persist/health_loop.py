@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 
 from app.services.trading_hours import is_trading_hours
 
-logger = logging.getLogger("qihuo.factor_health")
+logger = logging.getLogger("app.factor_health")
 
 # 每天刷一次；启动后先等一小段避免与冷启动抢资源
 _INTERVAL_SEC = 24 * 3600

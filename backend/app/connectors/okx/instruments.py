@@ -7,7 +7,7 @@ from typing import Any
 
 from app.data.instruments import EXCHANGE_OKX, Instrument, set_instruments
 
-logger = logging.getLogger("qihuo.okx.instruments")
+logger = logging.getLogger("app.okx.instruments")
 
 _INSTRUMENTS_PATH = "/api/v5/public/instruments"
 

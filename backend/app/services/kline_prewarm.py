@@ -20,7 +20,7 @@ from typing import Any
 
 import redis.asyncio as aioredis
 
-logger = logging.getLogger("qihuo.kline_prewarm")
+logger = logging.getLogger("app.kline_prewarm")
 
 _BJ_TZ = timezone(timedelta(hours=8))
 

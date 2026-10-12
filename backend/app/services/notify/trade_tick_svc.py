@@ -22,7 +22,7 @@ from app.data.instruments import extract_product_code
 from app.models.big_order import TradeTick
 from app.services.trading_hours import beijing_now, get_trading_day
 
-logger = logging.getLogger("qihuo.trade_tick_svc")
+logger = logging.getLogger("app.trade_tick_svc")
 
 # 北京时区（occurred_at 显式带时区写入，避免 PG 按 UTC 解释导致偏移）
 _BJ_TZ = timezone(__import__("datetime").timedelta(hours=8))

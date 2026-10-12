@@ -26,7 +26,7 @@ from app.services.signal_detect import period_label, resolve_signal_bar_index
 from app.services.signal_session import filter_session_bars
 from app.services.signal_universe import list_all_master_symbols
 
-logger = logging.getLogger("qihuo.market_screener")
+logger = logging.getLogger("app.market_screener")
 
 _SUPPORTED = ("1d", "60m", "30m", "15m", "5m")
 # 与前端图表 K 线加载量对齐（use-kline-history.ts PAGE_LIMIT=200）

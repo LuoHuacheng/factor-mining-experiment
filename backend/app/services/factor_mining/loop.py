@@ -31,7 +31,7 @@ from app.services.factor_lab.search import SearchConfig, search_stepwise
 from app.services.factor_mining.loader import load_mining_bars
 from app.services.trading_hours import is_trading_hours
 
-logger = logging.getLogger("qihuo.factor_mining")
+logger = logging.getLogger("app.factor_mining")
 
 # 循环间隔：有任务时快速推进，无任务时降频
 _INTERVAL_ACTIVE = 1.0

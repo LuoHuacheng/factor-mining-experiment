@@ -25,7 +25,7 @@ from app.services.ai.research.types import (
     SubAgentPlanItem,
 )
 
-logger = logging.getLogger("qihuo.ai.research.orchestrator")
+logger = logging.getLogger("app.ai.research.orchestrator")
 
 _SUBAGENT_CONCURRENCY = 3
 

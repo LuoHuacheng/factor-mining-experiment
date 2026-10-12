@@ -354,7 +354,7 @@ async def admin_run_kline_task(
         except Exception:
             import logging
 
-            logging.getLogger("qihuo.admin").exception(
+            logging.getLogger("app.admin").exception(
                 "手动触发 K 线任务失败 %s", name
             )
 

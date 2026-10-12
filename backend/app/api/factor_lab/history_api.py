@@ -18,7 +18,7 @@ from app.services.factor_lab.persist.history_svc import (
     upsert_champions_fifo,
 )
 
-logger = logging.getLogger("qihuo.factor_lab")
+logger = logging.getLogger("app.factor_lab")
 router = APIRouter()
 
 

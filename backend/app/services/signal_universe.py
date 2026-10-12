@@ -12,7 +12,7 @@ from app.data.instruments import (
     get_product_name,
 )
 
-logger = logging.getLogger("qihuo.signal_universe")
+logger = logging.getLogger("app.signal_universe")
 
 
 async def list_all_master_symbols(redis_conn: Any = None) -> list[dict[str, str]]:

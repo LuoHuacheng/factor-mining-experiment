@@ -23,7 +23,7 @@ from app.models.notification import (
 )
 from app.models.user_notify_setting import UserNotifySetting
 
-logger = logging.getLogger("qihuo.notify_svc")
+logger = logging.getLogger("app.notify_svc")
 
 # 类别 → 开关字段映射
 _CATEGORY_TO_FLAG: dict[str, str] = {

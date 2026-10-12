@@ -13,7 +13,7 @@ import httpx
 
 from app.schemas.news import NewsItem
 
-logger = logging.getLogger("qihuo.news_fetcher")
+logger = logging.getLogger("app.news_fetcher")
 
 # 东方财富期货新闻 API
 _NEWS_API_URL = "https://search-api-web.eastmoney.com/search/jsonp"

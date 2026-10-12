@@ -24,7 +24,7 @@ from typing import Any
 
 import redis.asyncio as aioredis
 
-logger = logging.getLogger("qihuo.kline_provider")
+logger = logging.getLogger("app.kline_provider")
 
 # 合法 K 线源（tencent 接口不可用已移除；remote 由 QIHUO_KLINE_REMOTE_BASE 启用）
 # simnow 从 PG 读取（VVTR 权威修正 + 实时固化的数据）——kline_sync 定时把

@@ -16,7 +16,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-logger = logging.getLogger("qihuo.kline_persist")
+logger = logging.getLogger("app.kline_persist")
 
 # 模块级 session_factory（由 scheduler 注入）
 _session_factory: Any = None

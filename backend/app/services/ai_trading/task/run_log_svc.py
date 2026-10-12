@@ -16,7 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.ai_trading import AITradingRunLog, AITradingTask
 
-logger = logging.getLogger("qihuo.run_log")
+logger = logging.getLogger("app.run_log")
 
 _REASON_MAX = 2000
 

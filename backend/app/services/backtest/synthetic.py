@@ -29,7 +29,7 @@ from app.services.backtest.data import TIMEFRAME_MAX_DAYS
 from app.services.backtest.signals import apply_hard_rules, normalize_action, quant_signal
 from app.services.paper.specs import resolve_trade_params
 
-logger = logging.getLogger("qihuo.synthetic")
+logger = logging.getLogger("app.synthetic")
 
 # 各周期每交易日的 K 线根数（按国内期货日盘 09:00-11:30/13:30-15:00 = 270 分钟）
 BARS_PER_DAY: dict[str, int] = {

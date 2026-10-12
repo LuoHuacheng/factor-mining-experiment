@@ -25,7 +25,7 @@ from app.services.factor_lab.scoring.periods import bars_per_year
 from app.services.factor_lab.persist.history_svc import upsert_champions_fifo
 from app.services.factor_lab.search import SearchConfig, search
 
-logger = logging.getLogger("qihuo.factor_lab")
+logger = logging.getLogger("app.factor_lab")
 router = APIRouter()
 
 

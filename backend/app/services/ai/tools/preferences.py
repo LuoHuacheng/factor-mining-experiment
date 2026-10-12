@@ -15,7 +15,7 @@ from app.services.ai.providers.base import ToolDef
 from app.services.ai.tools.catalog import known_tool_names
 from app.services.ai.tools.definitions import get_tool_definitions
 
-logger = logging.getLogger("qihuo.ai.tool_prefs")
+logger = logging.getLogger("app.ai.tool_prefs")
 
 _KEY_DISABLED = "ai:tools:disabled"
 _KEY_FREE_TRADE = "ai:tools:free_trade"

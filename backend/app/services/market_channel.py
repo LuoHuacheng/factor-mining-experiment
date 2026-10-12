@@ -39,7 +39,7 @@ from app.services.market_keys import (
     source_quote_key,
 )
 
-logger = logging.getLogger("qihuo.market_channel")
+logger = logging.getLogger("app.market_channel")
 
 CHANNEL_SINA = "sina"
 CHANNEL_OPENCTP_724 = "openctp_724"

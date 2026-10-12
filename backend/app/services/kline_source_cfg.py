@@ -16,7 +16,7 @@ from typing import Any
 
 import redis.asyncio as aioredis
 
-logger = logging.getLogger("qihuo.kline_source_cfg")
+logger = logging.getLogger("app.kline_source_cfg")
 
 CONFIG_KEY = "kline:source:config"
 _CONFIG_TTL = 300

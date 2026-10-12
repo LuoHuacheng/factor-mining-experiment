@@ -31,7 +31,7 @@ from app.services.market_channel import (
     write_channel_to_redis,
 )
 
-logger = logging.getLogger("qihuo.channel_failover")
+logger = logging.getLogger("app.channel_failover")
 
 _BJ_TZ = timezone(timedelta(hours=8))
 _HEALTH_INTERVAL = 10  # 健康监控间隔（秒）

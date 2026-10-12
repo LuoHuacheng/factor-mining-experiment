@@ -20,7 +20,7 @@ from app.api.factor_lab.common import champion_payload
 from app.models.factor_mining.task import FactorMiningTask
 from app.services.factor_mining.loader import load_mining_bars
 
-logger = logging.getLogger("qihuo.factor_mining")
+logger = logging.getLogger("app.factor_mining")
 
 # 单用户同时运行的任务数上限（防止资源滥用）
 MAX_RUNNING_PER_USER = 2

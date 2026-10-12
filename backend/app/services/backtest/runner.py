@@ -38,7 +38,7 @@ from app.services.ai_trading.strategies.quant_ref import (
 )
 from app.services.paper.specs import resolve_trade_params
 
-logger = logging.getLogger("qihuo.backtest")
+logger = logging.getLogger("app.backtest")
 
 # AI 回测最多调用模型次数（控制成本/耗时；经前端代理建议整段 <5 分钟）
 AI_MAX_CALLS = 24

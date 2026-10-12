@@ -28,7 +28,7 @@ from app.services.factor_lab.scoring.walk_forward import (
 )
 from app.services.factor_lab.search import Champion, _dedup_top
 
-logger = logging.getLogger("qihuo.factor_lab")
+logger = logging.getLogger("app.factor_lab")
 
 MAX_ROUNDS = 3
 # 与 GA 搜索同款的防过拟合门控（train_ratio / WF 折数）

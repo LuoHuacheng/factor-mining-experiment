@@ -19,7 +19,7 @@ from app.schemas.factor_lab import LlmGenerateRequest
 from app.services.factor_lab.llm.llm_factor import generate_factors
 from app.services.factor_lab.persist.history_svc import upsert_champions_fifo
 
-logger = logging.getLogger("qihuo.factor_lab")
+logger = logging.getLogger("app.factor_lab")
 router = APIRouter()
 
 

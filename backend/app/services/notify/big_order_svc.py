@@ -15,7 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.trading_mode import normalize_trading_mode
 from app.models.big_order import BigOrderAlertSetting
 
-logger = logging.getLogger("qihuo.big_order_svc")
+logger = logging.getLogger("app.big_order_svc")
 
 
 async def get_or_create_setting(
