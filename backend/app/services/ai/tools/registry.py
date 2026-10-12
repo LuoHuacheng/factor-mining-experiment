@@ -216,16 +216,15 @@ async def execute_tool(
 
 async def _execute_get_news(symbol: str) -> str:
     """新闻工具。"""
-    from app.data.contract_keywords import CONTRACT_KEYWORDS
-    from app.data.contracts import get_code_for_symbol
+    from app.data.instruments import CRYPTO_KEYWORDS, get_code_for_symbol
     from app.data.news_fetcher import fetch_news_by_keyword
 
     symbol_l = symbol.lower().strip()
-    code = get_code_for_symbol(symbol_l).lower() if symbol_l else ""
+    code = get_code_for_symbol(symbol_l).upper() if symbol_l else ""
     if not code:
-        code = "".join(ch for ch in symbol_l if ch.isalpha())
-    keywords = CONTRACT_KEYWORDS.get(code, [])
-    keyword = keywords[0] if keywords else (code or symbol_l or "期货")
+        code = symbol_l.split("-")[0].upper()
+    keywords = CRYPTO_KEYWORDS.get(code, [])
+    keyword = keywords[0] if keywords else (code or symbol_l or "加密货币")
     news_items = await fetch_news_by_keyword(keyword, 10)
     payload = [item.model_dump() for item in news_items[:10]]
     if not payload:

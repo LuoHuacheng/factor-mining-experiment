@@ -76,7 +76,7 @@ async def create_task(
     # symbol 规整：用户选的是品种 code（如 rb），转成主力合约符号（如 rb2610），
     # 与因子实验室/AI交易/回测统一口径（它们都需要具体合约符号 rb2610）。
     # 这样收藏后到回测/AI交易里能正确找到品种。
-    from app.data.contracts import get_master_symbol_for_code
+    from app.data.instruments import get_master_symbol_for_code
 
     master_symbol = get_master_symbol_for_code(symbol.strip().lower())
 

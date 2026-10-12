@@ -10,8 +10,8 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.data.contracts import get_decimal_places, get_tick_size
-from app.data.product_specs import get_product_spec, list_all_product_specs
+from app.data.instruments import get_decimal_places, get_tick_size
+from app.data.instruments import get_product_spec, list_all_product_specs
 from app.models.paper.settings import PaperTradeSettings
 
 

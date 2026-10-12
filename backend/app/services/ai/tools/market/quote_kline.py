@@ -10,7 +10,7 @@ from typing import Any
 
 import redis.asyncio as aioredis
 
-from app.data.sina_kline import SUPPORTED_PERIODS
+SUPPORTED_PERIODS: tuple[str, ...] = ("1m", "5m", "15m", "30m", "60m", "1d")
 from app.services.kline import get_kline_history
 
 logger = logging.getLogger("qihuo.ai.tools_market")
@@ -218,18 +218,7 @@ async def tool_get_quote(
             "freshness": "scheduler_~1s",
             "quote": _sum_quote(cached),
         }
-    from app.connectors.sina.client import fetch_quote_via_bridge
-
-    quote = await asyncio.to_thread(fetch_quote_via_bridge, symbol_clean)
-    if quote is None:
-        return {"success": False, "error": f"未获取到行情: {symbol_clean}"}
-    return {
-        "success": True,
-        "source": "sina",
-        "as_of": as_of,
-        "freshness": "sina_bridge_fetch",
-        "quote": _sum_quote(quote),
-    }
+    return {"success": False, "error": f"未获取到行情: {symbol_clean}"}
 
 
 async def tool_get_kline(
@@ -250,7 +239,7 @@ async def tool_get_kline(
     bar_limit = _limit(limit, 50, 200)
     as_of = datetime.now(_BJ).isoformat(timespec="seconds")
     bars: list[dict[str, Any]] = []
-    source = "sina_direct"
+    source = "history"
     if redis_conn is not None:
         bars = await get_kline_history(
             redis_conn, symbol_clean, period_clean, limit=bar_limit, end_time="", session=None

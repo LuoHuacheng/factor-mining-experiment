@@ -17,8 +17,8 @@ from typing import Any
 from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.data.contracts import get_tick_size, round_by_tick
-from app.data.product_specs import extract_product_code
+from app.data.instruments import get_tick_size, round_by_tick
+from app.data.instruments import extract_product_code
 from app.models.big_order import TradeTick
 from app.services.trading_hours import beijing_now, get_trading_day
 

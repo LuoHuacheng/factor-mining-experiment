@@ -113,7 +113,7 @@ async def attach_aux_for_tokens(
     if not groups or not bars:
         return bars
     try:
-        from app.data.contracts import get_code_for_symbol
+        from app.data.instruments import get_code_for_symbol
         from app.data.product_sectors import get_cross_peers
 
         code = get_code_for_symbol(symbol) or (

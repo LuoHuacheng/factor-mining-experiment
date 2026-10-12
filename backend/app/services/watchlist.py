@@ -21,7 +21,7 @@ def resolve_current_master(symbol: str) -> tuple[str, str]:
     「★ 自选」分组会整组消失。未知品种原样返回（名称空串，
     调用方保留库中原名）。
     """
-    from app.data.contracts import (
+    from app.data.instruments import (
         get_code_for_symbol,
         get_contract_name,
         get_master_symbol_for_code,

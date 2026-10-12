@@ -5,7 +5,7 @@ import logging
 
 import redis.asyncio as aioredis
 
-from app.data.contract_keywords import find_matching_symbols
+from app.data.instruments import find_matching_symbols
 from app.data.news_fetcher import fetch_futures_news
 from app.schemas.news import NewsItem
 

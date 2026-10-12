@@ -151,7 +151,7 @@ async def _detect_bridge_events(redis_conn: Any) -> None:
     """
     import time as _t
 
-    from app.connectors.ctp.bridge_heartbeat import parse_heartbeat
+    from app.services.market_keys import parse_heartbeat
     from app.services.ops_alert import bridge_last_exit_key, push_ops_alert
 
     for mode in ("live", "virtual"):

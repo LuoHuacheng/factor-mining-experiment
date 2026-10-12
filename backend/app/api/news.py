@@ -5,7 +5,7 @@ from urllib.parse import urlparse
 from fastapi import APIRouter, Query, Request
 
 from app.data.article_fetcher import fetch_article_content
-from app.data.contract_keywords import extract_base_symbol, get_primary_keyword
+from app.data.instruments import extract_base_symbol, get_primary_keyword
 from app.data.news_fetcher import fetch_news_by_keyword
 from app.schemas.news import ArticleContent
 from app.services.news import get_latest_news, get_symbol_news

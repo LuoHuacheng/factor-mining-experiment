@@ -24,8 +24,7 @@ from typing import Any
 
 import redis.asyncio as aioredis
 
-from app.data.contracts import ALL_CONTRACTS
-from app.services.contract_master import cache_master_contracts
+from app.data.instruments import ALL_CONTRACTS
 from app.services.kline import update_realtime_klines
 from app.services.market import (
     cache_orderbook,
@@ -80,7 +79,6 @@ return 0
 _bg_task: asyncio.Task | None = None
 _news_task: asyncio.Task | None = None
 _lock_task: asyncio.Task | None = None
-_master_task: asyncio.Task | None = None
 _ai_trading_task: asyncio.Task | None = None
 _factor_mining_task: asyncio.Task | None = None
 _factor_health_task: asyncio.Task | None = None
@@ -95,11 +93,7 @@ _kline_source_health_task: asyncio.Task | None = None
 _kline_sync_task: asyncio.Task | None = None
 _post_deploy_task: asyncio.Task | None = None
 _watchdog_task: asyncio.Task | None = None
-_vvtr_bridge_task: asyncio.Task | None = None
-_vvtr_tickdata_task: asyncio.Task | None = None
-_contracts_sync_task: asyncio.Task | None = None
 _kline_reconcile_task: asyncio.Task | None = None
-_tickdata_backfill_task: asyncio.Task | None = None
 _ai_anchor_task: asyncio.Task | None = None
 _kline_prewarm_task: asyncio.Task | None = None
 _is_master: bool = False
@@ -302,25 +296,7 @@ async def _live_kline_quotes(
         read_channel_from_redis,
     )
 
-    try:
-        channel = await read_channel_from_redis(redis_conn, MODE_LIVE)
-    except Exception:
-        channel = "sina"
-
-    source_label = "sina"
-    if channel == CHANNEL_REAL_CTP:
-        source_label = "real_ctp"
-    elif channel == CHANNEL_CTP_SIM:
-        # CTP 中转模拟（休市联调）：模拟 tick 驱动 forming；
-        # 分钟 forming 仍受交易时段闸门约束（休市只动日线）
-        source_label = CHANNEL_CTP_SIM
-    elif channel == CHANNEL_VVTR:
-        # VVTR 需开关启用（镜像缺失/关闭时保持新浪 forming）
-        from app.connectors.vvtr.config import read_vvtr_state_from_redis
-
-        state = await read_vvtr_state_from_redis(redis_conn)
-        if state.get("enabled") and state.get("quotes_enabled"):
-            source_label = "vvtr"
+    source_label = "okx"
 
     # bridge 写入的源键（channel_label = real_ctp / ctp_sim / vvtr / sina）
     quotes: list[dict[str, Any]] = []
@@ -358,34 +334,14 @@ async def _background_virtual_side_loop(redis_conn: aioredis.Redis) -> None:
     fill_counter = 0
     while True:
         try:
-            from app.services.kline_virtual import update_virtual_realtime_klines
             from app.services.market_channel import collect_quotes_from_redis
             from app.services.virtual_market_side import process_virtual_side_markets
             from app.services.virtual_quote_pulse import (
                 pulse_stale_virtual_quotes,
                 repair_drifted_virtual_quotes,
-                trim_pulse_hist_bars,
             )
 
-            # 约每 60s 补一次缺 key（openctp 从未推过的品种）
             fill_counter += 1
-            if fill_counter >= 60:
-                fill_counter = 0
-                try:
-                    from app.services.virtual_quote_fill import (
-                        fill_missing_virtual_quotes_from_sina,
-                    )
-
-                    await fill_missing_virtual_quotes_from_sina(redis_conn)
-                except Exception:
-                    logger.exception("virtual 补行情失败")
-                # 顺带清历史脏 bar（低频）
-                try:
-                    await trim_pulse_hist_bars(redis_conn)
-                except Exception:
-                    logger.exception("virtual 历史脏 bar 清理失败")
-
-            # 先修漂移（随机游走残留），再锚价脉冲
             if fill_counter == 1 or fill_counter % 30 == 0:
                 n_fix = await repair_drifted_virtual_quotes(redis_conn)
                 if n_fix:
@@ -396,7 +352,6 @@ async def _background_virtual_side_loop(redis_conn: aioredis.Redis) -> None:
                 n_tr = await process_virtual_side_markets(redis_conn, virt_quotes)
                 if n_tr:
                     logger.debug("virtual 成交推送 %d 笔", n_tr)
-                await update_virtual_realtime_klines(redis_conn, virt_quotes)
         except asyncio.CancelledError:
             raise
         except Exception:
@@ -440,27 +395,6 @@ async def _background_fetch_loop(redis_conn: aioredis.Redis) -> None:
         except Exception:
             logger.error("行情拉取异常", exc_info=True)
 
-
-async def _background_master_loop(redis_conn: aioredis.Redis) -> None:
-    """主力合约识别循环:每 5 秒扫描 Redis quote 缓存,识别每个品种的主力/次主力
-
-    启动时立即跑一次,然后每 _MASTER_INTERVAL 秒循环一次。
-    失败不中断循环。
-    """
-    try:
-        await cache_master_contracts(redis_conn)
-        logger.info("初始主力合约识别完成")
-    except Exception:
-        logger.error("初始主力合约识别失败", exc_info=True)
-
-    while True:
-        await asyncio.sleep(_MASTER_INTERVAL)
-        try:
-            await cache_master_contracts(redis_conn)
-        except asyncio.CancelledError:
-            raise
-        except Exception:
-            logger.error("主力合约识别异常", exc_info=True)
 
 
 async def _background_price_alert_loop(redis_conn: aioredis.Redis) -> None:
@@ -603,19 +537,15 @@ async def _cancel_data_tasks() -> None:
 
     锁丢失时调用：必须先停写 Redis 的任务，再让本 worker 进入 watchdog。
     """
-    global _bg_task, _news_task, _master_task, _ai_trading_task
+    global _bg_task, _news_task, _ai_trading_task
     global _virtual_side_task, _price_alert_task, _big_order_purge_task
     global _channel_health_task, _channel_preflight_task
-    global _kline_source_health_task, _kline_sync_task, _vvtr_bridge_task
-    global _vvtr_tickdata_task
-    global _contracts_sync_task
+    global _kline_source_health_task, _kline_sync_task
     global _kline_reconcile_task
-    global _tickdata_backfill_task
     global _ai_anchor_task
     global _kline_prewarm_task
     await _cancel_named_task("行情拉取", _bg_task)
     await _cancel_named_task("新闻采集", _news_task)
-    await _cancel_named_task("主力识别", _master_task)
     await _cancel_named_task("AI交易", _ai_trading_task)
     await _cancel_named_task("虚拟盘盘口", _virtual_side_task)
     await _cancel_named_task("价格预警", _price_alert_task)
@@ -624,16 +554,11 @@ async def _cancel_data_tasks() -> None:
     await _cancel_named_task("渠道开盘前自检", _channel_preflight_task)
     await _cancel_named_task("K线源健康监控", _kline_source_health_task)
     await _cancel_named_task("K线TqSdk修正", _kline_sync_task)
-    await _cancel_named_task("VVTR行情桥", _vvtr_bridge_task)
-    await _cancel_named_task("VVTR tickdata同步", _vvtr_tickdata_task)
-    await _cancel_named_task("VVTR主力合约同步", _contracts_sync_task)
     await _cancel_named_task("K线盘中对账", _kline_reconcile_task)
-    await _cancel_named_task("tickdata缺口回填", _tickdata_backfill_task)
     await _cancel_named_task("AI看盘主播", _ai_anchor_task)
     await _cancel_named_task("K线盘前预热", _kline_prewarm_task)
     _bg_task = None
     _news_task = None
-    _master_task = None
     _ai_trading_task = None
     _factor_mining_task = None
     _factor_health_task = None
@@ -644,11 +569,9 @@ async def _cancel_data_tasks() -> None:
     _channel_preflight_task = None
     _kline_source_health_task = None
     _kline_sync_task = None
-    _vvtr_bridge_task = None
-    _vvtr_tickdata_task = None
-    _contracts_sync_task = None
     _kline_reconcile_task = None
-    _tickdata_backfill_task = None
+    _ai_anchor_task = None
+    _kline_prewarm_task = None
     _ai_anchor_task = None
     _kline_prewarm_task = None
 
@@ -730,7 +653,6 @@ async def _start_background_tasks(redis_conn: aioredis.Redis) -> None:
     _lock_task = asyncio.create_task(_renew_lock_loop(redis_conn))
     _bg_task = asyncio.create_task(_background_fetch_loop(redis_conn))
     _news_task = asyncio.create_task(_background_news_loop(redis_conn))
-    _master_task = asyncio.create_task(_background_master_loop(redis_conn))
     _virtual_side_task = asyncio.create_task(
         _background_virtual_side_loop(redis_conn),
         name="virtual-side-loop",
@@ -810,73 +732,6 @@ async def _start_background_tasks(redis_conn: aioredis.Redis) -> None:
         _post_deploy_reconcile_once(redis_conn),
         name="post-deploy-kline-reconcile",
     )
-
-    # VVTR WS v2 深度行情桥（仅 master 单实例，满足每 key 1 连接约束）
-    try:
-        from app.connectors.vvtr.ws_bridge import vvtr_ws_bridge_loop
-
-        _vvtr_bridge_task = asyncio.create_task(
-            vvtr_ws_bridge_loop(redis_conn, _session_factory),
-            name="vvtr-ws-bridge",
-        )
-        logger.info("VVTR WS 行情桥任务已启动（未配置密钥时自动休眠）")
-    except Exception:
-        logger.exception("启动 VVTR WS 行情桥失败")
-
-
-    # VVTR K线 → pg-tickdata 每日自动同步（盘中每小时，休市 6 小时对账）
-    try:
-        from app.services.vvtr_tickdata_sync import vvtr_tickdata_sync_loop
-
-        _vvtr_tickdata_task = asyncio.create_task(
-            vvtr_tickdata_sync_loop(redis_conn, _session_factory),
-            name="vvtr-tickdata-sync",
-        )
-        logger.info("VVTR K线 tickdata 同步任务已启动")
-    except Exception:
-        logger.exception("启动 VVTR tickdata 同步失败")
-
-    # tickdata 缺口定向回填（每日 03:30，非主力合约缺段闭环）
-    try:
-        from app.services.tickdata_gap_backfill import tickdata_gap_backfill_loop
-
-        global _tickdata_backfill_task
-        _tickdata_backfill_task = asyncio.create_task(
-            tickdata_gap_backfill_loop(redis_conn, _session_factory),
-            name="tickdata-gap-backfill",
-        )
-        logger.info("tickdata 缺口回填任务已启动（每日 03:30）")
-    except Exception:
-        logger.exception("启动 tickdata 缺口回填失败")
-
-    # VVTR 主力合约同步（realSymbol → 刷新 ALL_CONTRACTS；仅 master）
-    try:
-        from app.services.contracts_sync import (
-            REFRESH_INTERVAL as _CS_REFRESH,
-            refresh_masters_from_vvtr,
-        )
-
-        async def _contracts_sync_loop() -> None:
-            # 启动先套用 Redis 快照（跨部署存活，秒级恢复主力），
-            # 再拉 realSymbol 全量刷新（约 69 品种 × 1.1s 节流）
-            from app.services.contracts_sync import ensure_active_contracts
-
-            await ensure_active_contracts(redis_conn)
-            while True:
-                try:
-                    await refresh_masters_from_vvtr(redis_conn, _session_factory)
-                except asyncio.CancelledError:
-                    raise
-                except Exception:
-                    logger.exception("VVTR 主力合约同步失败")
-                await asyncio.sleep(_CS_REFRESH)
-
-        _contracts_sync_task = asyncio.create_task(
-            _contracts_sync_loop(), name="contracts-sync-loop"
-        )
-        logger.info("VVTR 主力合约同步任务已启动（%dh 一刷）", _CS_REFRESH // 3600)
-    except Exception:
-        logger.exception("启动 VVTR 主力合约同步失败")
 
     # AI 交易自治 loop（与行情同 master worker）
     try:

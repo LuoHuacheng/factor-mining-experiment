@@ -46,7 +46,7 @@ async def factor_health_loop(session_factory, redis_conn) -> None:
 async def _load_bars(symbol: str, timeframe: str, limit: int, session_factory):
     """近端 bars：日线走主库历史，分钟走挖掘 loader（近期口径足够）"""
     if timeframe == "1d":
-        from app.data.contracts import get_code_for_symbol
+        from app.data.instruments import get_code_for_symbol
         from app.services.kline_history import query_history_bars
 
         code = get_code_for_symbol(symbol) or symbol.upper()

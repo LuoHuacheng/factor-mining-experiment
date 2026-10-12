@@ -70,7 +70,7 @@ async def persist_closed_bar(
 
     # 只写 1m（多周期不冗余存储）
     try:
-        from app.data.contracts import get_code_for_symbol
+        from app.data.instruments import get_code_for_symbol
         from app.services.kline_minute import upsert_minute_bars
 
         code = get_code_for_symbol(symbol).lower()

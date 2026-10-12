@@ -17,7 +17,7 @@ import logging
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
-from app.connectors.ctp.bridge_heartbeat import (
+from app.services.market_keys import (
     bridge_heartbeat_key,
     parse_heartbeat,
 )
@@ -114,7 +114,7 @@ async def probe_channel_health(
         # 心跳新鲜说明桥在轮询；trade_date=今天说明数据确实落到了统一键。
         import time as _time
 
-        from app.connectors.sina.config import HEARTBEAT_KEY as SINA_HB_KEY
+        SINA_HB_KEY = "sina:heartbeat"
 
         hb_raw = await _get_str(redis_conn, SINA_HB_KEY)
         hb_age: float | None = None
@@ -144,7 +144,7 @@ async def probe_channel_health(
 
     if ch == CHANNEL_VVTR:
         # VVTR：读 ws_bridge 心跳（ts/channel/mode/connected/symbols）
-        from app.connectors.vvtr.ws_bridge import VVTR_HEARTBEAT_KEY
+        VVTR_HEARTBEAT_KEY = "vvtr:heartbeat"
 
         hb_raw = await _get_str(redis_conn, VVTR_HEARTBEAT_KEY)
         hb: dict[str, Any] = {}

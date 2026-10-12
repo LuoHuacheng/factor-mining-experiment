@@ -5,7 +5,7 @@ from __future__ import annotations
 import time
 from typing import Any
 
-from app.data.product_specs import get_product_spec
+from app.data.instruments import get_product_spec
 
 MarketField = dict[str, Any]
 

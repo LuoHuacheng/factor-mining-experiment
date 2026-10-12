@@ -105,15 +105,10 @@ def _start_hhmm() -> tuple[int, int]:
 
 
 async def _master_symbols(redis_conn: aioredis.Redis) -> list[str]:
-    from app.services.contract_master import get_master_contracts
+    from app.data.instruments import all_instruments, get_master_symbol_for_code
 
-    masters = await get_master_contracts(redis_conn)
-    symbols = {
-        str(entry.get("master") or "").lower()
-        for entry in (masters or {}).values()
-        if entry.get("master")
-    }
-    return sorted(symbols)
+    codes = {inst.code for inst in all_instruments()}
+    return sorted(get_master_symbol_for_code(code) for code in codes if code)
 
 
 async def run_prewarm_once(redis_conn: aioredis.Redis) -> int:

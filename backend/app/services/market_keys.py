@@ -147,3 +147,28 @@ async def get_quote_json(
         except (json.JSONDecodeError, TypeError):
             continue
     return None
+
+
+def bridge_heartbeat_key(mode: str) -> str:
+    """CTP/bridge 心跳键"""
+    return f"market:{mode}:bridge:heartbeat"
+
+
+def parse_heartbeat(raw: Any) -> dict[str, Any]:
+    """解析桥心跳 JSON 并推算 age_sec"""
+    if not raw:
+        return {}
+    if isinstance(raw, bytes):
+        raw = raw.decode("utf-8", errors="ignore")
+    try:
+        data = json.loads(raw)
+        if isinstance(data, dict):
+            ts = data.get("ts")
+            if ts is not None and "age_sec" not in data:
+                import time
+                data["age_sec"] = max(0.0, time.time() - float(ts))
+            return data
+    except Exception:
+        pass
+    return {}
+

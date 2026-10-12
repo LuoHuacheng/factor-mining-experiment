@@ -12,7 +12,7 @@ from typing import Any
 
 import redis.asyncio as aioredis
 
-from app.data.contracts import ALL_CONTRACTS, get_code_for_symbol, get_decimal_places
+from app.data.instruments import ALL_CONTRACTS, get_code_for_symbol, get_decimal_places
 from app.services.market_channel import fetch_quotes_for_channel
 
 logger = logging.getLogger("qihuo.market")

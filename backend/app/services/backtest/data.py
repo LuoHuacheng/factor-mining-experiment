@@ -253,22 +253,4 @@ async def _no_data_hint(symbol: str, timeframe: str) -> str:
     "是不是没接入"。
     """
     base = "未获取到 K 线数据，请换品种/周期或稍后再试"
-    if timeframe == "1d":
-        return base
-    try:
-        from app.data.contracts import get_code_for_symbol
-        from app.data.tickdata_kline import earliest_minute_date
-
-        code = get_code_for_symbol(symbol)
-        if not code:
-            return base
-        product = code.lower()
-        earliest = await earliest_minute_date(product, timeframe)
-        if not earliest:
-            return base
-        return (
-            f"{timeframe} 分钟历史数据最早支持 {earliest}，所选区间早于此；"
-            "更早的历史请改用日线回测"
-        )
-    except Exception:
-        return base
+    return base

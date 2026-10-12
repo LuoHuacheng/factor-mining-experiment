@@ -18,7 +18,7 @@ from app.core.auth import decode_token
 from app.core.config import load_settings
 from app.core.deps import AuthContext, get_auth_context, get_session
 from app.core.trading_mode import DEFAULT_MODE, normalize_trading_mode
-from app.data.sina_kline import SUPPORTED_PERIODS
+SUPPORTED_PERIODS: tuple[str, ...] = ("1m", "5m", "15m", "30m", "60m", "1d")
 from app.schemas.kline import KlineBundleResponseSchema, KlineResponseSchema
 from app.services.kline import get_kline_history
 

@@ -52,7 +52,7 @@ async def collect_market_health(
         live_ch = await _get_str(redis_conn, LEGACY_CHANNEL_KEY)
     virt_ch = await _get_str(redis_conn, channel_key("virtual"))
 
-    from app.connectors.ctp.bridge_heartbeat import (
+    from app.services.market_keys import (
         bridge_heartbeat_key,
         parse_heartbeat,
     )

@@ -11,7 +11,7 @@ from typing import Any
 
 from fastapi import HTTPException
 
-from app.data.contracts import get_mock_base_price
+from app.data.instruments import get_mock_base_price
 
 # 允许偏离最新价的最大比例
 PRICE_BAND_RATIO: Decimal = Decimal("0.10")

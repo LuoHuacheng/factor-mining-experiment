@@ -71,19 +71,6 @@ async def admin_update_settings(
             payload.get("market_refresh_interval_sec", 1),
             payload.get("market_refresh_intervals"),
         )
-        # VVTR 开关镜像（1s 热路径读取）+ 配置缓存失效（桥 10s 内重连/休眠）
-        from app.connectors.vvtr.config import (
-            invalidate_async_cache,
-            write_vvtr_state_to_redis,
-        )
-
-        await write_vvtr_state_to_redis(
-            redis_conn,
-            enabled=bool(payload.get("vvtr_enabled")),
-            quotes_enabled=bool(payload.get("vvtr_quotes_enabled")),
-            kline_enabled=bool(payload.get("vvtr_kline_enabled")),
-        )
-        invalidate_async_cache()
         # ctp_sim 渠道配置镜像（bridge 重启时读取覆盖 env 默认）
         from app.services.crypto import decrypt
         from app.services.market_channel import write_ctp_sim_config_to_redis
@@ -122,36 +109,14 @@ async def admin_test_vvtr(
     _admin: User = Depends(get_current_admin),
     session: AsyncSession = Depends(get_session),
 ) -> dict:
-    """测试 VVTR 连接：调 /my/permissions 校验密钥并回显套餐/权限
-
-    密钥来源：请求体明文（保存前试连）→ DB 已存密钥（AES 解密）。
-    响应/日志均不含明文密钥。
-    """
-    from app.connectors.vvtr.http_client import fetch_vvtr_permissions
-    from app.services.crypto import decrypt
-
-    row = await ensure_system_settings(session)
-    base_url = str(getattr(row, "vvtr_base_url", "") or "")
-    stored_mobile = str(getattr(row, "vvtr_mobile", "") or "")
-    api_key = str(body.api_key or "").strip()
-    if not api_key:
-        raw = str(getattr(row, "vvtr_api_key", "") or "").strip()
-        if raw:
-            try:
-                api_key = decrypt(raw)
-            except Exception:
-                api_key = ""
-    mobile = str(body.mobile or "").strip() or stored_mobile
-    if not api_key:
-        return {
-            "ok": False,
-            "code": None,
-            "msg": "未提供密钥（请求体或系统设置中均无 apiKey）",
-            "packages": [],
-            "apis": [],
-        }
-    result = await to_thread(fetch_vvtr_permissions, api_key, mobile, base_url)
-    return result
+    """VVTR 已下线"""
+    return {
+        "ok": False,
+        "code": None,
+        "msg": "VVTR 已下线，现仅支持 OKX",
+        "packages": [],
+        "apis": [],
+    }
 
 
 # ---------- 渠道状态 ----------
@@ -386,14 +351,6 @@ async def admin_run_kline_task(
                 from app.services.kline import reconcile_forming_with_vvtr
 
                 await reconcile_forming_with_vvtr(redis_conn)
-            elif name == "vvtr_tickdata_sync":
-                from app.services.vvtr_tickdata_sync import sync_masters_to_tickdata
-
-                await sync_masters_to_tickdata(redis_conn, days=2.0)
-            elif name == "tickdata_gap_backfill":
-                from app.services.tickdata_gap_backfill import backfill_gaps_once
-
-                await backfill_gaps_once(redis_conn, sf, trigger="manual")
         except Exception:
             import logging
 

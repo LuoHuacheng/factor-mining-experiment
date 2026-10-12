@@ -7,8 +7,8 @@ from typing import Any
 
 import redis.asyncio as aioredis
 
+from app.data.instruments import all_instruments, get_master_symbol_for_code
 from app.services.ai.tools.market import tool_get_kline, tool_get_quote
-from app.services.contract_master import get_master_contracts
 
 _MAX_OI_POINTS = 80
 
@@ -68,23 +68,15 @@ async def tool_get_master_contract(
     code: str,
     redis_conn: aioredis.Redis | None,
 ) -> dict[str, Any]:
-    """查询品种主力/次主力合约。"""
+    """查询品种主力合约。"""
     code_clean = code.strip().upper()
     if not code_clean:
-        return {"success": False, "error": "code 不能为空，例如 RB/AU/IF"}
-    if redis_conn is None:
-        return {"success": False, "error": "Redis 不可用，无法读取主力合约缓存"}
+        return {"success": False, "error": "code 不能为空，例如 BTC/ETH"}
 
-    masters = await get_master_contracts(redis_conn)
-    if not masters:
-        return {
-            "success": False,
-            "error": "主力合约缓存为空，请稍后重试（调度器可能尚未完成识别）",
-        }
-
-    item = masters.get(code_clean)
-    if item is None:
-        available = sorted(masters.keys())[:30]
+    master = get_master_symbol_for_code(code_clean)
+    all_codes = {i.code for i in all_instruments()}
+    if code_clean not in all_codes:
+        available = sorted(all_codes)[:30]
         return {
             "success": False,
             "error": f"未找到品种 {code_clean}",
@@ -93,9 +85,9 @@ async def tool_get_master_contract(
     return {
         "success": True,
         "code": code_clean,
-        "master": item.get("master"),
-        "secondary": item.get("secondary"),
-        "updated_at": item.get("updated_at"),
+        "master": master,
+        "secondary": None,
+        "updated_at": "",
     }
 
 

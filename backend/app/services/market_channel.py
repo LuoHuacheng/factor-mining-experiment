@@ -28,7 +28,7 @@ from typing import Any
 import redis.asyncio as aioredis
 
 from app.core.trading_mode import MODE_LIVE, MODE_VIRTUAL
-from app.data.contracts import ALL_CONTRACTS
+from app.data.instruments import ALL_CONTRACTS
 from app.data.quote_schema import filter_valid_quotes, is_valid_quote
 from app.services.market_keys import (
     LEGACY_CHANNEL_KEY,
@@ -321,14 +321,6 @@ async def fetch_quotes_for_channel(
     trading_mode: str = MODE_LIVE,
 ) -> list[dict[str, Any]]:
     """按渠道 + 交易盘拉取主行情列表"""
-    # 惰性套用 VVTR 主力合约快照（5 分钟检查一次；换月后消费端即时跟进）
-    from app.services.contracts_sync import ensure_active_contracts
-
-    try:
-        await ensure_active_contracts(redis_conn)
-    except Exception:
-        logger.debug("主力合约快照套用异常", exc_info=True)
-
     if trading_mode == MODE_VIRTUAL:
         # 虚拟盘只读 openctp 7×24 bridge 写入的 virtual 命名空间
         quotes = await collect_quotes_from_redis(redis_conn, MODE_VIRTUAL)
@@ -338,24 +330,11 @@ async def fetch_quotes_for_channel(
             )
         return quotes
 
-    # 探测推送源（vvtr WS 桥）是否在实际供数：
-    # 供数时 sina 源键仅作昨结/名称等日内静态字段兜底；断流时 sina 即主源。
     active_channel = channel
     if active_channel is None:
         active_channel = await read_channel_from_redis(redis_conn, MODE_LIVE)
     push_quotes: list[dict[str, Any]] = []
     push_source = ""
-    if active_channel == CHANNEL_VVTR:
-        from app.connectors.vvtr.config import read_vvtr_state_from_redis
-
-        state = await read_vvtr_state_from_redis(redis_conn)
-        if state.get("enabled") and state.get("quotes_enabled"):
-            push_quotes = await collect_source_quotes_from_redis(
-                redis_conn, CHANNEL_VVTR
-            )
-            push_source = CHANNEL_VVTR
-            if not push_quotes:
-                logger.debug("VVTR 渠道源键为空，本轮以 sina 源键为主")
     # sina 源键（qihuo-sina-bridge 写入）：读 Redis，本进程不出网。
     # 盘口深度 5 档 → 1 档（sina 仅 bid1/ask1）。
     sina_quotes = await collect_source_quotes_from_redis(redis_conn, CHANNEL_SINA)

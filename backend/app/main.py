@@ -842,6 +842,18 @@ async def lifespan(application: FastAPI):
         await _init_tables(engine)
         logger.info("数据表检查完成")
 
+    # 拉取 OKX 品种规格（失败不阻塞启动：品种表为空时行情链路自然降级）
+    from app.connectors.okx.client import OkxRestClient
+    from app.connectors.okx.instruments import refresh_instruments
+
+    okx_client = OkxRestClient()
+    try:
+        count = await refresh_instruments(okx_client)
+        logger.info("OKX 品种表就绪：%d 条", count)
+    except Exception as exc:
+        logger.warning("OKX 品种表拉取失败（行情将不可用）：%s", exc)
+    application.state.okx_client = okx_client
+
     # 注入会话工厂供模拟挂单撮合使用，再启动定时任务
     set_session_factory(session_factory)
     await start_scheduler(redis_conn)
@@ -859,6 +871,7 @@ async def lifespan(application: FastAPI):
 
     # 关闭：释放资源
     logger.info("正在关闭应用...")
+    await okx_client.aclose()
     await stop_ops_alert_subscriber()
     await stop_big_order_subscriber()
     await stop_notify_subscriber()

@@ -66,7 +66,7 @@ async def list_mining_symbols(session: AsyncSession) -> list[dict[str, Any]]:
     静态合约表中无映射的品种该字段为 None，前端回退展示品种 code。
     只有这里返回的品种才能做超长挖掘（loader 直查 PG）。
     """
-    from app.data.contracts import (
+    from app.data.instruments import (
         get_contract_name,
         get_master_symbol_for_code,
         get_product_name,

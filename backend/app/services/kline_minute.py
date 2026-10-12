@@ -208,7 +208,7 @@ async def upsert_minute_bars_update(
 
 
 def _row_to_bar(row: KlineMinute) -> dict[str, Any]:
-    """ORM 行 → 标准 bar 格式（与新浪/akshare 一致）"""
+    """ORM 行 → 标准 bar 格式"""
     return {
         "time": row.ts.strftime("%Y-%m-%d %H:%M:%S") if row.ts else "",
         "open": row.open,
@@ -217,3 +217,71 @@ def _row_to_bar(row: KlineMinute) -> dict[str, Any]:
         "close": row.close,
         "volume": row.volume,
     }
+
+
+_PERIOD_MINUTES = {"1m": 1, "3m": 3, "5m": 5, "15m": 15, "30m": 30, "60m": 60, "1h": 60, "4h": 240}
+
+
+def aggregate_from_1m(
+    bars_1m: list[dict[str, Any]],
+    period: str,
+    symbol: str = "",
+) -> list[dict[str, Any]]:
+    """从 1m K 线聚合为多分钟 K 线"""
+    minutes = _PERIOD_MINUTES.get(str(period).lower())
+    if minutes is None or minutes <= 1 or not bars_1m:
+        return list(bars_1m)
+
+    from collections import OrderedDict
+    from datetime import timedelta
+    from app.services.trading_hours import period_start_for_product
+
+    buckets: OrderedDict[str, dict[str, Any]] = OrderedDict()
+    for bar in bars_1m:
+        t_str = str(bar.get("time") or "")
+        try:
+            dt = datetime.strptime(t_str[:19], "%Y-%m-%d %H:%M:%S")
+        except (ValueError, IndexError):
+            continue
+        try:
+            o = float(bar.get("open") or 0)
+            h = float(bar.get("high") or 0)
+            l = float(bar.get("low") or 0)
+            c = float(bar.get("close") or 0)
+        except (TypeError, ValueError):
+            continue
+        if o <= 0 or h <= 0 or l <= 0 or c <= 0:
+            continue
+
+        start = period_start_for_product(symbol, dt, minutes)
+        if start is None:
+            total = dt.hour * 60 + dt.minute
+            start_total = (total // minutes) * minutes
+            base = dt.replace(hour=0, minute=0, second=0, microsecond=0)
+            start = base + timedelta(minutes=start_total)
+        key = start.strftime("%Y-%m-%d %H:%M:%S")
+        vol = int(bar.get("volume") or 0)
+        oi = bar.get("open_interest")
+        settle = bar.get("settle")
+        if key not in buckets:
+            buckets[key] = {
+                "time": key,
+                "open": o,
+                "high": h,
+                "low": l,
+                "close": c,
+                "volume": vol,
+                "settle": settle,
+                "open_interest": oi,
+            }
+            continue
+        b = buckets[key]
+        b["high"] = max(float(b["high"]), h)
+        b["low"] = min(float(b["low"]), l)
+        b["close"] = c
+        b["volume"] = int(b["volume"] or 0) + vol
+        if oi is not None:
+            b["open_interest"] = oi
+        if settle is not None:
+            b["settle"] = settle
+    return list(buckets.values())

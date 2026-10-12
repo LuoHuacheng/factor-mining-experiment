@@ -262,53 +262,8 @@ async def repair_drifted_virtual_quotes(redis_conn: aioredis.Redis) -> int:
 
 
 async def trim_pulse_hist_bars(redis_conn: aioredis.Redis) -> int:
-    """历史库里 source=virtual 且相对 seed 末根偏离过大的 bar 剔除"""
-    from app.data.contracts import ALL_CONTRACTS
-    from app.services.kline_keys import history_kline_key
-    from app.services.kline_virtual_hist import save_virtual_history, load_virtual_history
-
-    periods = ["1m", "5m", "15m", "30m", "60m", "1d"]
-    n_trim = 0
-    for c in ALL_CONTRACTS:
-        sym = str(c.get("symbol") or "").lower()
-        if not sym:
-            continue
-        for period in periods:
-            bars = await load_virtual_history(redis_conn, sym, period)
-            if not bars:
-                continue
-            # 找最后一根 seed 的 close 作参考
-            seed_close = 0.0
-            for b in reversed(bars):
-                if str(b.get("source") or "") == "seed":
-                    try:
-                        seed_close = float(b.get("close") or 0)
-                    except (TypeError, ValueError):
-                        seed_close = 0.0
-                    break
-            if seed_close <= 0:
-                continue
-            kept: list[dict[str, Any]] = []
-            changed = False
-            for b in bars:
-                src = str(b.get("source") or "")
-                if src != "virtual":
-                    kept.append(b)
-                    continue
-                try:
-                    close = float(b.get("close") or 0)
-                except (TypeError, ValueError):
-                    close = 0.0
-                if close > 0 and _drift_ratio(seed_close, close) > 0.03:
-                    changed = True
-                    n_trim += 1
-                    continue
-                kept.append(b)
-            if changed:
-                await save_virtual_history(redis_conn, sym, period, kept)
-    if n_trim:
-        logger.info("virtual 历史脏 bar 已剔除 %d 根", n_trim)
-    return n_trim
+    """已下线虚拟历史裁剪"""
+    return 0
 
 
 async def pulse_stale_virtual_quotes(

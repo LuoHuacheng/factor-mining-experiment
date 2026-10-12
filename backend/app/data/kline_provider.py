@@ -114,20 +114,13 @@ def _valid_bars(bars: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
 
 def _fetch_sina(symbol: str, period: str) -> list[dict[str, Any]]:
-    """新浪源（经 qihuo-sina-bridge HTTP 代理，本进程不出网）"""
-    from app.connectors.sina.client import (
-        fetch_daily_kline_via_bridge,
-        fetch_minute_kline_via_bridge,
-    )
-
-    if period == "1d":
-        return _valid_bars(fetch_daily_kline_via_bridge(symbol))
-    return _valid_bars(fetch_minute_kline_via_bridge(symbol, period))
+    """已下线新浪源"""
+    return []
 
 
 def _code_exchange_for_symbol(symbol: str) -> tuple[str, str]:
     """合约代码 → (品种 code 小写, 交易所中文名)"""
-    from app.data.contracts import ALL_CONTRACTS, get_code_for_symbol
+    from app.data.instruments import ALL_CONTRACTS, get_code_for_symbol
 
     code = get_code_for_symbol(symbol).lower()
     exchange = ""
@@ -171,8 +164,8 @@ async def _fetch_simnow_async(
 
     import asyncpg
 
-    from app.data.contracts import get_code_for_symbol
-    from app.data.sina_kline import aggregate_from_1m
+    from app.data.instruments import get_code_for_symbol
+    from app.services.kline_minute import aggregate_from_1m
 
     _BJ_TZ = timezone(timedelta(hours=8))
     code = get_code_for_symbol(symbol)
@@ -308,14 +301,7 @@ async def _fill_daily_from_http(
         except ValueError:
             pass
 
-    # PG 数据过旧，交叉验证拉取多源数据（tqsdk 已移除，东财+新浪两源互验）
-    from app.data.kline_crosscheck import cross_validate_and_merge
-
-    http_bars, stats = await cross_validate_and_merge(symbol, "1d")
-
-    if not http_bars:
-        # 所有源都失败，返回 PG 已有数据（即使旧）
-        return _valid_bars(pg_bars)
+    return _valid_bars(pg_bars)
 
     # 补全的数据写入 PG kline_history（永久存储）
     try:
@@ -538,14 +524,6 @@ async def fetch_kline_with_fallback(
                 )
                 continue
             await _mark_success(redis_conn, source)
-            # VVTR 源写通 pg-tickdata（fire-and-forget，60s 节流，失败不影响返回）
-            if source == "vvtr":
-                try:
-                    from app.data.tickdata_writer import persist_bars_task
-
-                    persist_bars_task(symbol, period, bars)
-                except Exception:
-                    logger.debug("TickData 写通调度失败 %s %s", symbol, period)
             return bars
         # 空=该合约在此源无数据（合约属性，非源故障）：不计源失败——
         # 否则 3 个死合约就能把唯一源打进 60s 冷却=全断

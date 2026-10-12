@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from app.data.instruments import all_instruments, get_master_symbol_for_code
 from app.services.ai.research.types import ProductRef
-from app.services.contract_master import get_master_contracts
 
 
 # 每批品种数约束
@@ -76,12 +76,10 @@ async def list_master_products(
       - 列表：品种代码（RB）或合约（rb2610）过滤
     返回 (products, error_message)
     """
-    if redis_conn is None:
-        return [], "Redis 不可用，无法读取主力合约"
-
-    masters = await get_master_contracts(redis_conn)
+    instruments = all_instruments()
+    masters = {i.code: get_master_symbol_for_code(i.code) for i in instruments}
     if not masters:
-        return [], "主力合约缓存为空，请稍后重试"
+        return [], "品种表为空，请稍后重试"
 
     # 规范化 scope
     filter_codes: set[str] | None = None
@@ -105,8 +103,7 @@ async def list_master_products(
     for code in sorted(masters.keys()):
         if filter_codes is not None and code not in filter_codes:
             continue
-        item = masters[code]
-        master_symbol = item.get("master")
+        master_symbol = masters[code]
         if not master_symbol:
             continue
         products.append(

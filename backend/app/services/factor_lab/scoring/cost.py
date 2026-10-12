@@ -13,7 +13,7 @@ rb 约 3000 元/吨、tick=1 元 → 单边滑点 3.3bp，已超过 3bp 的总�
 
 from __future__ import annotations
 
-from app.data.product_specs import get_product_spec
+from app.data.instruments import get_product_spec
 
 # 默认滑点：1 个最小变动价位（流动主力合约短线的现实下限）
 DEFAULT_SLIPPAGE_TICKS = 1.0

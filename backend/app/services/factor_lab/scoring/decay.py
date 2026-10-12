@@ -14,7 +14,7 @@ from typing import Any
 
 import numpy as np
 
-from app.data.contracts import get_code_for_symbol
+from app.data.instruments import get_code_for_symbol
 
 from ..features import feature_matrix
 from ..vm import execute, validate

@@ -52,7 +52,7 @@ _BJ_TZ = timezone(timedelta(hours=8))
 
 def _unique_codes() -> list[dict[str, str]]:
     """从 ALL_CONTRACTS 去重提取 {code, exchange}（保序）"""
-    from app.data.contracts import ALL_CONTRACTS
+    from app.data.instruments import ALL_CONTRACTS
 
     seen: set[str] = set()
     out: list[dict[str, str]] = []
@@ -68,7 +68,7 @@ def _unique_codes() -> list[dict[str, str]]:
 def _resolve_main_symbol(code: str) -> str:
     """从 ALL_CONTRACTS 找品种 code 对应的第一个合约符号（主力）"""
     try:
-        from app.data.contracts import ALL_CONTRACTS
+        from app.data.instruments import ALL_CONTRACTS
 
         for c in ALL_CONTRACTS:
             if str(c.get("code") or "").lower() == code.lower():
@@ -239,94 +239,9 @@ async def backfill_tickdata_1m_from_mainpg(
     1m 最大 eob，把主 PG 更新的行（含尾部 1 天重写窗口，幂等覆盖）
     经交易日历过滤后 upsert 进永久库。返回 {symbol: rows}。
     """
-    from datetime import datetime, timedelta
+    return {}
 
-    from sqlalchemy import text as _text
 
-    from app.data.tickdata_kline import _get_pool
-    from app.data.tickdata_writer import persist_bars
-    from app.services.kline import _filter_non_trading_bars
-
-    pool = await _get_pool()
-    if pool is None:
-        return {}
-
-    # 主 PG：近 N 天 1m（ts 为 UTC timestamptz，转北京墙钟 bob）
-    # 存储口径注意：kline_minute.ts 的写入方（upsert_minute_bars*）把北京
-    # 墙钟 naive 串按 UTC 存入 timestamptz，读取方用 to_char(ts,...) 原样
-    # 取回墙钟串（strftime 同口径）才是自洽往返。此前这里误用
-    # ts AT TIME ZONE 'Asia/Shanghai'（+8 读出 05:15/07:00 等幻影时刻），
-    # 再被交易日过滤整段丢弃，补洞静默失效（2026-08-24 pp2701 1m 缺口
-    # 修复后仍复发的原因之一）。
-    async with session_factory() as session:
-        result = await session.execute(
-            _text(
-                "SELECT symbol, to_char(ts, 'YYYY-MM-DD HH24:MI:SS') AS ts_bj, "
-                "open, high, low, close, volume, hold "
-                "FROM kline_minute WHERE period = '1m' "
-                f"AND ts >= now() - interval '{int(days * 24)} hours' "
-                "ORDER BY symbol, ts"
-            )
-        )
-        rows = result.fetchall()
-
-    by_symbol: dict[str, list[dict[str, Any]]] = {}
-    for r in rows:
-        by_symbol.setdefault(str(r[0]), []).append(
-            {
-                "time": str(r[1]),
-                "open": float(r[2]),
-                "high": float(r[3]),
-                "low": float(r[4]),
-                "close": float(r[5]),
-                "volume": int(r[6]),
-                "open_interest": int(r[7]) if r[7] else None,
-            }
-        )
-    if not by_symbol:
-        return {}
-
-    # pg-tickdata：各 instrument 1m 最大 eob（北京墙钟）。
-    # 限定近 days+1 天窗口：kline 表按月分区，无界全表聚合会超时
-    async with pool.acquire() as conn:
-        td_rows = await conn.fetch(
-            "SELECT instrument, to_char(max(ts), 'YYYY-MM-DD HH24:MI:SS') "
-            f"FROM kline WHERE period = 1 AND ts >= now() - interval '{int(days * 24) + 24} hours' "
-            "GROUP BY instrument"
-        )
-    max_eob = {r[0]: str(r[1] or "") for r in td_rows}
-
-    written: dict[str, int] = {}
-    for symbol, bars in by_symbol.items():
-        try:
-            bound = max_eob.get(symbol)
-            if bound:
-                # eob 尾部留 1 天重写窗口（幂等覆盖，修正可能的坏尾）
-                try:
-                    cutoff = (
-                        datetime.strptime(bound, "%Y-%m-%d %H:%M:%S")
-                        - timedelta(days=1)
-                    ).strftime("%Y-%m-%d %H:%M:%S")
-                except ValueError:
-                    cutoff = ""
-                if cutoff:
-                    bars = [b for b in bars if b["time"] > cutoff]
-            # 周末幽灵 bar 不入永久库
-            bars = _filter_non_trading_bars(bars, "1m")
-            if not bars:
-                continue
-            n = await persist_bars(symbol, "1m", bars, force=True)
-            if n:
-                written[symbol] = n
-        except Exception:
-            logger.debug("1m 永久库补全失败 %s", symbol, exc_info=True)
-    if written:
-        logger.info(
-            "pg-tickdata 1m 补全（主 PG 固化差集）：%d 合约 %d 行",
-            len(written),
-            sum(written.values()),
-        )
-    return written
 
 
 async def _sync_one_period(
@@ -336,39 +251,9 @@ async def _sync_one_period(
     period: str,
     redis_conn: aioredis.Redis | None = None,
 ) -> tuple[int, dict[str, int]]:
-    """从 pg-tickdata 读取单合约单周期（权威值）写入主 PG,并并入历史缓存
-
-    第二段修正：数据源是共享库 pg-tickdata（由 vvtr_tickdata_sync 于
-    01:00/15:05 定点 + 盘中每小时同步），本路径不直连 vvtr 分发源——
-    避免修正与 tickdata 同步两路全量打 vvtr 把 1 req/s 预算打满。
-
-    返回 (写入条数, 统计)
-    """
-    from app.data.tickdata_kline import fetch_tickdata_kline
-
-    # end_time 留空取最近 limit 根；最近视图不做 9999 主力连续拼接
-    # （fetch_tickdata_kline 对 end_time 为空的请求只回本合约自身 bar）
-    bars = await fetch_tickdata_kline(symbol, period, limit=_SYNC_FETCH_LIMIT)
-    if not bars:
-        return 0, {"verified": 0, "single": 0, "conflict": 0, "skipped": 0}
-
-    # pg-tickdata（上游 vvtr）即权威源：直接写入，不做多源交叉验证
-    if period == SYNC_PERIOD_DAILY:
-        from app.services.kline_history import upsert_history_bars
-
-        async with session_factory() as session:
-            n = await upsert_history_bars(session, code, bars)
-    else:
-        from app.services.kline_minute import upsert_minute_bars_update
-
-        async with session_factory() as session:
-            n = await upsert_minute_bars_update(
-                session, code, symbol, period, bars
-            )
-    # 修正结果并入历史缓存,客户端(含桌面端)直接读到权威值
-    await _merge_corrected_into_cache(redis_conn, symbol, period, bars)
-    return n, {
-        "verified": len(bars),
+    """已下线 tickdata 权威修正"""
+    return 0, {
+        "verified": 0,
         "single": 0,
         "conflict": 0,
         "skipped": 0,
@@ -379,13 +264,8 @@ async def _build_sync_items(
     redis_conn: aioredis.Redis | None,
     session_factory: Any,
 ) -> list[dict[str, str]]:
-    """构建修正清单：主力缓存 ∪ 近 3 天库内有实时数据的合约
-
-    必须包含 kline_minute 近期出现过的 symbol——实时固化（persist_closed_bar）
-    只写这些合约（含 ma2701 这类非主力），它们正是最需要权威修正的对象。
-    主力缓存为空且库也无近期数据时，兜底静态合约表。
-    """
-    from app.data.contracts import get_code_for_symbol
+    """构建修正清单：主力 ∪ 近 3 天库内有实时数据的标的"""
+    from app.data.instruments import get_code_for_symbol
 
     items: dict[str, dict[str, str]] = {}
 
@@ -404,17 +284,15 @@ async def _build_sync_items(
                 "exchange": "",
             }
 
-    # 1) 主力识别缓存（各品种当前主力）
-    if redis_conn is not None:
-        try:
-            from app.services.contract_master import get_master_contracts
+    # 1) 各品种主力
+    try:
+        from app.data.instruments import all_instruments, get_master_symbol_for_code
 
-            masters = await get_master_contracts(redis_conn)
-            for entry in (masters or {}).values():
-                if isinstance(entry, dict):
-                    _add(entry.get("master"))
-        except Exception:
-            logger.debug("主力缓存读取失败", exc_info=True)
+        codes = {i.code for i in all_instruments()}
+        for c in codes:
+            _add(get_master_symbol_for_code(c))
+    except Exception:
+        logger.debug("主力标的读取失败", exc_info=True)
 
     # 2) kline_minute 近 3 天出现过的合约（实时固化写入面）
     if session_factory is not None:

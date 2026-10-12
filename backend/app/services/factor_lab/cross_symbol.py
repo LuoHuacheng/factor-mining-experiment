@@ -29,7 +29,7 @@ async def load_cross_peer_bars(
     （Sina+tickdata 合并路径较重，默认不加载 → 分钟跨品种验证跳过）。
     加载失败/数据不足的伙伴被静默剔除。
     """
-    from app.data.contracts import get_code_for_symbol
+    from app.data.instruments import get_code_for_symbol
 
     code = get_code_for_symbol(symbol) or (
         "".join(ch for ch in str(symbol).lower() if ch.isalpha())
@@ -94,7 +94,7 @@ def cross_validate_tokens(
 
 def describe_cross_setting(symbol: str) -> str:
     """配置诊断文案（供 API applied/config 快照）"""
-    from app.data.contracts import get_code_for_symbol
+    from app.data.instruments import get_code_for_symbol
 
     code = get_code_for_symbol(symbol) or ""
     sector = get_sector(code)

@@ -12,7 +12,7 @@ from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.data.contracts import get_code_for_symbol
+from app.data.instruments import get_code_for_symbol
 from app.services.kline import get_kline_history
 from app.services.kline_history import get_latest_history_date, query_history_bars
 
@@ -23,8 +23,7 @@ MAX_DAILY_BARS = 8000
 # 分钟线上限：E5 实验（docs/experiments/factor-improvements-RESULTS.md P5 节）
 # 深历史 2 万根（×6.7）下默认预算（40×20）严格筛冠军 6→0——长历史让
 # train/test+WF 三重门极难全过；ma 因数据空洞截断仅 ×1.6。深度可用但
-# 质量不升，按预登记规则回滚上限；tickdata 深分钟数据经换月平滑后仍可
-# 通过 fetch_tickdata_kline(limit=..., adjusted=True) 直接取用。
+# 质量不升，按预登记规则回滚上限；深分钟数据经换月平滑后仍可直接取用。
 MINUTE_TF_LIMIT = {
     "60m": 1500,
     "30m": 2000,
@@ -109,7 +108,7 @@ async def _load_minute(
     """
     from fastapi import HTTPException
 
-    from app.data.contracts import ALL_CONTRACTS, get_code_for_symbol
+    from app.data.instruments import ALL_CONTRACTS, get_code_for_symbol
 
     limit = MINUTE_TF_LIMIT[timeframe]
     # 品种 code → 主力合约 symbol（ALL_CONTRACTS 里该 code 的第一个 symbol）
@@ -141,15 +140,6 @@ async def _load_minute(
             and c.get("symbol")
             and c["symbol"] != contract_symbol
         ]
-        try:
-            from app.data.tickdata_kline import freshest_contracts
-
-            fresh = await freshest_contracts(
-                (code or symbol).lower(), timeframe, k=3
-            )
-            candidates += [s for s in fresh if s not in candidates]
-        except Exception:
-            logger.debug("freshest_contracts 回退失败", exc_info=True)
         for cand in candidates:
             try:
                 td_bars = await _tickdata_minute_bars(cand, timeframe, limit)
@@ -157,7 +147,7 @@ async def _load_minute(
                 td_bars = []
             if td_bars:
                 logger.info(
-                    "当期合约 %s 无 tickdata 分钟数据，改用 %s",
+                    "当期合约 %s 无分钟数据，改用 %s",
                     contract_symbol, cand,
                 )
                 break
@@ -184,20 +174,8 @@ async def _tickdata_minute_bars(
     timeframe: str,
     limit: int,
 ) -> list[dict[str, Any]]:
-    """tickdata 具体合约分钟深历史；未配置/失败返回空（降级新浪）
-
-    adjusted=True：分期主力拼接段做换月后向平滑——挖掘评估是
-    close-to-close 口径，换月跳空会注入虚假盈亏污染适应度。
-    """
-    try:
-        from app.data.tickdata_kline import fetch_tickdata_kline
-
-        return await fetch_tickdata_kline(
-            contract_symbol, timeframe, end_time="", limit=limit, adjusted=True
-        )
-    except Exception:
-        logger.debug("tickdata 分钟深历史获取失败，降级新浪近期", exc_info=True)
-        return []
+    """分钟深历史回退（现直接返回空）"""
+    return []
 
 
 def _drop_big_gaps(

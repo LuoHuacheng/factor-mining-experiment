@@ -14,23 +14,16 @@ from typing import Any
 import redis.asyncio as aioredis
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.data.contracts import get_code_for_symbol
-from app.data.product_specs import extract_product_code
-from app.data.sina_kline import aggregate_from_1m
-from app.data.tickdata_kline import fetch_tickdata_kline
-from app.services.kline_history import query_history_bars
-from app.services.kline_minute import query_minute_history
-from app.services.session_profiles import (
-    all_sessions,
+from app.data.instruments import get_code_for_symbol
+from app.data.instruments import extract_product_code
+from app.services.kline_minute import aggregate_from_1m, query_minute_history
+from app.services.trading_hours import (
     fold_tick_minute_edge,
-    get_profile,
+    get_trading_day,
+    is_symbol_trading,
+    is_trading_hours,
     period_end_for_product,
     period_start_for_product,
-)
-from app.services.trading_hours import (
-    get_trading_day,
-    is_trading_hours,
-    is_symbol_trading,
 )
 
 # 北京时间（UTC+8）
@@ -309,16 +302,6 @@ async def _live_ref_price(
             )
             ref_dt = _parse_bar_clock(str(iso)) if iso else None
             return last, ref_dt
-    # 兜底：pg-tickdata 权威最新收盘（本地库查询，零外部请求）
-    try:
-        td = await fetch_tickdata_kline(sym, "1m", end_time="", limit=1)
-        if td:
-            last = float(td[-1].get("close") or 0)
-            if last > 0:
-                ref_dt = _parse_bar_clock(str(td[-1].get("time") or ""))
-                return last, ref_dt
-    except Exception:
-        logger.debug("tickdata 基准价读取失败 %s", sym, exc_info=True)
     return 0.0, None
 
 
@@ -401,25 +384,6 @@ async def get_kline_history(
     _recent_cutoff = datetime.now(_BJ_TZ).replace(tzinfo=None) - timedelta(
         days=_RECENT_DIST_DAYS
     )
-    if end_time and (
-        _end_dt is None
-        or _end_dt < _recent_cutoff
-        or period in _MINUTE_DEEP_PERIODS
-    ):
-        td_bars = await fetch_tickdata_kline(
-            symbol, period, end_time=end_time, limit=limit or 200,
-            adjusted=adjusted,
-        )
-        if td_bars:
-            td_bars = _filter_bars_not_future(td_bars, period, symbol)
-            return _dedupe_bars_by_time(td_bars, period)
-
-    if normalize_trading_mode(trading_mode) == MODE_VIRTUAL:
-        from app.services.kline_virtual_hist import get_virtual_kline_history
-
-        return await get_virtual_kline_history(
-            redis_conn, symbol, period, limit=limit, end_time=end_time
-        )
 
     cache_key = _history_cache_key(symbol, period)
     fail_key = f"{_FAIL_CACHE_PREFIX}:{symbol}:{period}"
@@ -539,19 +503,6 @@ async def get_kline_history(
                     bars[-1].get("time"), symbol, period,
                 )
                 bars = []
-        # TickData 最近段兜底：仅当 HTTP/PG 全挂且（交易时段内）数据足够新
-        if not bars:
-            td_bars = await fetch_tickdata_kline(
-                symbol, period, end_time="", limit=limit or 500
-            )
-            if td_bars and _reject(td_bars):
-                logger.warning(
-                    "TickData 兜底数据过期/脏价（最新 %s），弃用 %s %s",
-                    td_bars[-1].get("time"), symbol, period,
-                )
-                td_bars = []
-            bars = td_bars
-        # 源历史可能自带周末幽灵 bar（vvtr 上游周末重放报价聚合）：
         # 入缓存前统一按交易日历过滤
         bars = _filter_non_trading_bars(bars, period)
         if bars:
@@ -569,39 +520,6 @@ async def get_kline_history(
                 pass
             return []
 
-    # 分钟深历史补全（2026-08-23）：新浪原生多分钟停用后，主链多分钟只能
-    # 由 ~1023 根 1m 聚合（60m≈17 / 30m≈34 / 15m≈68 根），低于因子实验室
-    # 客户端 60 根门槛。最新视图根数不足时，从 pg-tickdata 取本合约更早段
-    # 补前缀（end_time=主链最早 bar → 近端锚点，fetch_tickdata_kline 不做
-    # 跨合约拼接、带新鲜度守卫；尾部实时性仍由主链 + forming 保证）。
-    # 未配置 / 无该合约数据返回空，保持原序列。缓存命中的浅序列同样补全，
-    # 补全后整体写回历史缓存，TTL 内后续请求直接命中完整序列。
-    if (
-        not end_time
-        and period in _MINUTE_DEEP_PERIODS
-        and bars
-        and len(bars) < max(_MINUTE_DEEP_TARGET, limit or 0)
-    ):
-        _gap_end = str(bars[0].get("time") or "")
-        if _gap_end:
-            _want = max(_MINUTE_DEEP_TARGET, limit or 0)
-            try:
-                td_deep = await fetch_tickdata_kline(
-                    symbol, period, end_time=_gap_end, limit=_want
-                )
-            except Exception:
-                # best-effort：补深任何意外（未配置/上游异常）不影响主链返回
-                td_deep = []
-            if td_deep:
-                bars = _dedupe_bars_by_time(td_deep + bars, period)
-                try:
-                    await redis_conn.set(
-                        cache_key,
-                        json.dumps(bars, ensure_ascii=False),
-                        ex=_get_ttl(period),
-                    )
-                except Exception:
-                    logger.debug("分钟深历史补全写缓存失败 %s %s", symbol, period)
 
     # 日线懒加载：end_time 超出缓存范围时从 PG 补充历史数据
     if end_time and session is not None and period == "1d":
@@ -707,23 +625,6 @@ def _closed_market_stale(
 async def _tickdata_first_when_closed(
     symbol: str, period: str, limit: int
 ) -> list[dict[str, Any]]:
-    """闭市时段优先 pg-tickdata 永久历史（尾部够新才采用）。
-
-    Redis 过期后不再依赖 sina/vvtr 即席拉取（sina 限流返回慢/空、
-    vvtr 偶发残缺段，2026-08-24 pp2701 日线缺 8-11~8-21 即此路径）。
-    永久库由每小时同步 + 收盘后权威修正持续沉淀；尾部过旧（未被
-    同步覆盖的新合约）返回空，由调用方落回 HTTP 源链。
-    """
-    try:
-        td = await fetch_tickdata_kline(symbol, period, end_time="", limit=limit)
-    except Exception:
-        logger.debug(
-            "闭市 tickdata 优先读取失败 %s %s", symbol, period, exc_info=True
-        )
-        return []
-    td = _filter_non_trading_bars(td, period)
-    if td and not _closed_market_stale(td, period):
-        return td
     return []
 
 
@@ -880,24 +781,8 @@ def _filter_bars_not_future(
 
 
 def _daily_forming_first_session_start(symbol: str, trading_day: datetime) -> datetime:
-    """交易日 bar 的首个交易段开始时刻（北京墙钟，naive）。
-
-    有夜盘品种：夜盘在「上一交易日」晚间 21:00 开始（跳过周末——
-    周一的夜盘在周五 21:00）。无夜盘品种：当日日盘 09:00。
-    """
-    from datetime import time as dtime
-
-    code = extract_product_code(symbol)
-    sessions = all_sessions(get_profile(code))
-    has_night = any(s >= dtime(21, 0) for s, _ in sessions)
-
-    day = trading_day.replace(hour=0, minute=0, second=0, microsecond=0)
-    if has_night:
-        prev = day - timedelta(days=1)
-        while prev.weekday() >= 5:
-            prev -= timedelta(days=1)
-        return prev.replace(hour=21)
-    return day.replace(hour=9)
+    """24/7 下交易日 bar 的首个交易段开始时刻即自然日零点。"""
+    return trading_day.replace(hour=0, minute=0, second=0, microsecond=0)
 
 
 async def _attach_realtime_bar(
@@ -1496,86 +1381,8 @@ async def _cache_realtime_state(
 
 
 async def heal_recovered_forming(redis_conn: aioredis.Redis) -> int:
-    """用 vvtr 当根权威 OHLC 治愈恢复态 forming（升级重启后调用一次）
-
-    重启恢复的 forming 桶丢过前段快照（H/L 窄、基线乱），收线虽已禁止
-    固化，但盘中显示仍是残缺值。/kline/current 提供当根（含未收线）
-    权威 OHLCV（V 为当根增量口径）：时间键匹配的桶直接替换为权威值，
-    增量基线用 当日累计量-当根V 重建，替换后清除 recovered（可正常固化）。
-    拿不到 quote 基线或时间不匹配则保守跳过。
-    """
-    # 收集恢复态桶：{period: [symbol...]}
-    recovered: dict[str, list[str]] = {}
-    for symbol, periods in _realtime_state.items():
-        for period, state in periods.items():
-            if isinstance(state, dict) and state.get("recovered"):
-                recovered.setdefault(period, []).append(symbol)
-    if not recovered:
-        return 0
-
-    healed = 0
-    for period, symbols in recovered.items():
-        try:
-            def _fetch() -> dict[str, dict[str, Any]]:
-                from app.connectors.vvtr.config import get_vvtr_config_sync
-                from app.connectors.vvtr.http_client import fetch_vvtr_current_bars
-
-                cfg = get_vvtr_config_sync()
-                if not cfg.api_key or not cfg.kline_enabled:
-                    return {}
-                return fetch_vvtr_current_bars(
-                    cfg.api_key, symbols, period, base_url=cfg.base_url
-                )
-
-            current = await asyncio.to_thread(_fetch)
-        except Exception:
-            logger.debug("拉取当根权威 bar 失败 %s", period, exc_info=True)
-            continue
-        if not current:
-            continue
-
-        for symbol in symbols:
-            state = _realtime_state.get(symbol, {}).get(period)
-            if not isinstance(state, dict) or not state.get("recovered"):
-                continue  # 已被跨周期滚掉
-            auth = current.get(symbol)
-            if not auth or auth.get("time") != state.get("bar_time"):
-                continue  # 时间键不匹配（上游滞后/已跨周期）→ 保守跳过
-            try:
-                qraw = await redis_conn.get(f"market:live:quote:{symbol}")
-                total_vol = int(json.loads(qraw).get("volume") or 0) if qraw else 0
-                bar_vol = int(auth.get("volume") or 0)
-                if total_vol <= 0 or bar_vol > total_vol:
-                    continue  # 基线不可重建 → 跳过，保留禁固化保护
-                _apply_authoritative_bar(state, auth, total_vol)
-                await _cache_realtime_state(redis_conn, symbol, period, state)
-                healed += 1
-                logger.info(
-                    "恢复态 forming 已治愈 %s %s（权威 OHLC 替换）",
-                    symbol, period,
-                )
-            except Exception:
-                logger.debug("治愈 forming 失败 %s %s", symbol, period, exc_info=True)
-    return healed
-
-
-def _apply_authoritative_bar(
-    state: dict[str, Any],
-    auth: dict[str, Any],
-    total_volume: int,
-) -> None:
-    """用权威 bar 原地替换 forming 桶内容（版本递增 + 修正标记）。
-
-    version 递增保证 WS 下游（前端按 version 幂等覆盖）能识别这是同一根
-    bar 的修正而非旧数据回放；kind=correction 便于前端/日志区分。
-    """
-    bar = _normalize_bar(dict(auth))
-    state["version"] = int(state.get("version") or 0) + 1
-    bar["version"] = state["version"]
-    bar["kind"] = "correction"
-    state["bar"] = bar
-    state["period_start_volume"] = max(0, total_volume - int(auth.get("volume") or 0))
-    state.pop("recovered", None)  # 已权威化，恢复正常固化资格
+    """已下线 VVTR 治愈恢复态 forming"""
+    return 0
 
 
 def _bars_materially_differ(a: dict[str, Any], b: dict[str, Any]) -> bool:
@@ -1599,79 +1406,8 @@ async def reconcile_forming_with_vvtr(
     symbols: list[str] | None = None,
     periods: tuple[str, ...] = ("1m", "5m", "15m", "30m", "60m"),
 ) -> int:
-    """盘中对账：用 VVTR /kline/current 当根权威 OHLCV 校正 forming 桶。
-
-    背景：forming 由本地快照聚合（丢帧/渠道切换/时钟抖动都可能让当根
-    bar 偏离权威值），而权威历史要到收盘后 01:00/15:05 的 kline_sync 才
-    修正。盘中每 N 分钟抽样对账，时间键匹配且实质差异时原地替换：
-    version 递增 + kind=correction，WS 下游按 version 幂等覆盖收敛。
-
-    保守策略：上游滞后（权威 bar 时间键 ≠ 当前桶）/拉取失败/基线不可
-    重建 → 一律跳过，绝不用旧权威值覆盖新桶。VVTR HTTP 全局 1 rps，
-    每周期一次批量请求（多合约一次带走），调用方需控制节奏。
-    """
-    targets = {
-        sym: periods_map
-        for sym, periods_map in _realtime_state.items()
-        if not symbols or str(sym).lower() in {str(s).lower() for s in symbols}
-    }
-    if not targets:
-        return 0
-
-    corrected = 0
-    for period in periods:
-        sym_list = [
-            sym
-            for sym, periods_map in targets.items()
-            if isinstance(periods_map.get(period), dict)
-            and periods_map[period].get("bar_time")
-        ]
-        if not sym_list:
-            continue
-        try:
-            def _fetch() -> dict[str, dict[str, Any]]:
-                from app.connectors.vvtr.config import get_vvtr_config_sync
-                from app.connectors.vvtr.http_client import fetch_vvtr_current_bars
-
-                cfg = get_vvtr_config_sync()
-                if not cfg.api_key or not cfg.kline_enabled:
-                    return {}
-                return fetch_vvtr_current_bars(
-                    cfg.api_key, sym_list, period, base_url=cfg.base_url
-                )
-
-            current = await asyncio.to_thread(_fetch)
-        except Exception:
-            logger.debug("盘中对账拉取当根权威 bar 失败 %s", period, exc_info=True)
-            continue
-        if not current:
-            continue
-
-        for symbol in sym_list:
-            state = _realtime_state.get(symbol, {}).get(period)
-            if not isinstance(state, dict) or not state.get("bar_time"):
-                continue
-            auth = current.get(symbol)
-            if not auth or auth.get("time") != state.get("bar_time"):
-                continue  # 上游滞后/已跨周期 → 保守跳过
-            bar = state.get("bar") or {}
-            if not _bars_materially_differ(bar, auth):
-                continue
-            try:
-                qraw = await redis_conn.get(f"market:live:quote:{symbol}")
-                total_vol = int(json.loads(qraw).get("volume") or 0) if qraw else 0
-                if total_vol <= 0 or int(auth.get("volume") or 0) > total_vol:
-                    continue  # 增量基线不可重建 → 跳过本次，等下一轮
-                _apply_authoritative_bar(state, auth, total_vol)
-                await _cache_realtime_state(redis_conn, symbol, period, state)
-                corrected += 1
-                logger.info(
-                    "盘中对账修正 forming %s %s（version=%s）",
-                    symbol, period, state["version"],
-                )
-            except Exception:
-                logger.debug("盘中对账修正失败 %s %s", symbol, period, exc_info=True)
-    return corrected
+    """已下线 VVTR 盘中对账"""
+    return 0
 
 
 async def update_realtime_klines(
@@ -1694,16 +1430,15 @@ async def update_realtime_klines(
     # 非主力合约（移仓期新旧并存/静态合约表滞后切换）一旦写入会与主力
     # bar 交错，分时图出现 ±月间价差的坏 K（2026-08-24 fb 实测 ±7% 横跳）。
     try:
-        from app.services.contract_master import get_master_contracts
+        from app.data.instruments import all_instruments, get_master_symbol_for_code
 
-        _master_entries = await get_master_contracts(redis_conn)
+        codes = {i.code for i in all_instruments()}
         persist_masters = {
-            str(e.get("master") or "").strip().lower()
-            for e in (_master_entries or {}).values()
-            if isinstance(e, dict)
+            get_master_symbol_for_code(c).strip().lower()
+            for c in codes
         }
     except Exception:
-        logger.debug("主力集合读取失败，1m 固化放行全部合约", exc_info=True)
+        logger.debug("主力集合读取失败，1m 固化放行全部标的", exc_info=True)
         persist_masters = None  # None = 不限制（读取失败时不丢数据）
 
     for quote in quotes:
